@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ndi's Nail Bar | Luxury Manicures & Nail Art</title>
+    <meta name="description" content="Welcome to Ndi's Nail Bar. Experience premium nail care, custom nail art, acrylics, and gel manicures in a luxury glassmorphic rose gold setting. Book your appointment online today.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Montserrat:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="header">
+        <div class="logo">
+            <a href="#">NDI'S <span class="accent-text">NAIL BAR</span></a>
+        </div>
+        <nav class="navbar" id="navbar">
+            <a href="#home" class="nav-link active">Home</a>
+            <a href="#about" class="nav-link">About</a>
+            <a href="#services" class="nav-link">Services</a>
+            <a href="#portfolio" class="nav-link">Portfolio</a>
+            <a href="#reviews" class="nav-link">Reviews</a>
+            <a href="#booking-section" class="btn btn-primary nav-book-btn">Book Now</a>
+        </nav>
+        <button class="mobile-nav-toggle" aria-label="Toggle Navigation" id="mobile-toggle">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <span class="hero-subtitle">ELEGANCE AT YOUR FINGERTIPS</span>
+            <h1 class="hero-title">Where Art Meets <br><span class="highlight">Precision</span></h1>
+            <p class="hero-desc">Indulge in a premium nail care experience curated with artistic detail, rose gold aesthetics, and flawless designs tailored just for you.</p>
+            <div class="hero-actions">
+                <a href="#booking-section" class="btn btn-primary btn-large">Book Now</a>
+                <a href="#portfolio" class="btn btn-secondary btn-large">View Our Products</a>
+            </div>
+        </div>
+        <div class="hero-scroll-indicator">
+            <span>Scroll to explore</span>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- About Us Section -->
+    <section id="about" class="about">
+        <div class="about-container">
+            <div class="about-image-wrapper">
+                <img src="assets/about.jpg" alt="Inside Ndi's Nail Bar Luxury Studio Interior" class="about-img" loading="lazy">
+                <div class="about-image-border"></div>
+            </div>
+            <div class="about-content glass-panel">
+                <span class="section-tagline">THE ARTIST & THE STUDIO</span>
+                <h2 class="about-title">About Ndi's Nail Bar</h2>
+                <div class="about-divider"></div>
+                <p class="about-text">Ndi’s Nail Bar is a boutique nail studio founded on the belief that nail care is a form of personal expression and wellness. Every detail, from our rose-gold workspace to our medical-grade sanitation, is designed to offer a tranquil escape.</p>
+                <p class="about-text">Founder Ndi believes in sculptured elegance, pairing premium, non-toxic products with masterfully detailed, hand-painted art to make your design dreams a reality. We are dedicated to creating healthy, strong, and stunning nails that make a statement.</p>
+                <div class="about-signature">
+                    <span class="signature-name">Ndi</span>
+                    <span class="signature-title">Founder & Lead Nail Artist</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Promo / Highlight Info Banner -->
+    <section class="info-banner">
+        <div class="banner-item">
+            <div class="banner-icon"><i class="fa-solid fa-gem"></i></div>
+            <div class="banner-text">
+                <h3>Premium Products</h3>
+                <p>Non-toxic, high-shine, long-lasting gel and lacquer</p>
+            </div>
+        </div>
+        <div class="banner-item">
+            <div class="banner-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+            <div class="banner-text">
+                <h3>Custom Nail Art</h3>
+                <p>Hand-painted, intricate chrome and luxury embellishments</p>
+            </div>
+        </div>
+        <div class="banner-item">
+            <div class="banner-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="banner-text">
+                <h3>100% Sanitized</h3>
+                <p>Medical-grade sterilization for client safety</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="section-header">
+            <span class="section-tagline">OUR LUXURY MENU</span>
+            <h2 class="section-title">Indulgent Services</h2>
+            <div class="section-divider"></div>
+        </div>
+        
+        <div class="services-container">
+            <!-- Service Card 1 -->
+            <div class="service-card">
+                <div class="service-details">
+                    <span class="service-category">MANICURE</span>
+                    <h3 class="service-name">Gel Manicure</h3>
+                    <p class="service-description">Long-lasting, chip-resistant gel polish cured under LED light. Includes cuticle care, shaping, and hydrating massage.</p>
+                </div>
+                <div class="service-pricing">
+                    <span class="price">$45</span>
+                    <span class="duration"><i class="fa-regular fa-clock"></i> 45 mins</span>
+                    <button class="btn btn-service-book" data-service="Gel Manicure" data-price="45">Quick Book</button>
+                </div>
+            </div>
+
+            <!-- Service Card 2 -->
+            <div class="service-card">
+                <div class="service-details">
+                    <span class="service-category">EXTENSIONS</span>
+                    <h3 class="service-name">Acrylic Full Set</h3>
+                    <p class="service-description">Full set of sculpted premium acrylic extensions with length extension, shape of your choice, and solid gel color.</p>
+                </div>
+                <div class="service-pricing">
+                    <span class="price">$65</span>
+                    <span class="duration"><i class="fa-regular fa-clock"></i> 60 mins</span>
+                    <button class="btn btn-service-book" data-service="Acrylic Full Set" data-price="65">Quick Book</button>
+                </div>
+            </div>
+
+            <!-- Service Card 3 -->
+            <div class="service-card">
+                <div class="service-details">
+                    <span class="service-category">SPECIALTY</span>
+                    <h3 class="service-name">Glazed Chrome Gel</h3>
+                    <p class="service-description">The signature shimmering chrome finish on a base of your choice. Clean, reflective, and highly fashionable glazed look.</p>
+                </div>
+                <div class="service-pricing">
+                    <span class="price">$55</span>
+                    <span class="duration"><i class="fa-regular fa-clock"></i> 50 mins</span>
+                    <button class="btn btn-service-book" data-service="Glazed Chrome Gel" data-price="55">Quick Book</button>
+                </div>
+            </div>
+
+            <!-- Service Card 4 -->
+            <div class="service-card">
+                <div class="service-details">
+                    <span class="service-category">DESIGN</span>
+                    <h3 class="service-name">Custom Nail Art Set</h3>
+                    <p class="service-description">Bespoke hand-painted nail designs, fine floral line-work, custom patterns, or layered glitter detailing tailored to your theme.</p>
+                </div>
+                <div class="service-pricing">
+                    <span class="price">$75</span>
+                    <span class="duration"><i class="fa-regular fa-clock"></i> 75 mins</span>
+                    <button class="btn btn-service-book" data-service="Custom Nail Art Set" data-price="75">Quick Book</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio / Showcase Section -->
+    <section id="portfolio" class="portfolio">
+        <div class="section-header">
+            <span class="section-tagline">DISCOVER HER WORK</span>
+            <h2 class="section-title">Nail Art Gallery</h2>
+            <div class="section-divider"></div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="portfolio-filters">
+            <button class="filter-btn active" data-filter="all">All Designs</button>
+            <button class="filter-btn" data-filter="gel">Gel</button>
+            <button class="filter-btn" data-filter="acrylic">Acrylic</button>
+            <button class="filter-btn" data-filter="chrome">Chrome</button>
+            <button class="filter-btn" data-filter="art">Nail Art</button>
+        </div>
+
+        <!-- Grid Container -->
+        <div class="portfolio-grid">
+            <!-- Portfolio Item 1 -->
+            <div class="portfolio-item" data-category="acrylic">
+                <div class="portfolio-image-wrapper">
+                    <img src="assets/acrylic.jpg" alt="Rose Gold Acrylic Nail Extension Details" class="portfolio-img" loading="lazy">
+                    <div class="portfolio-overlay">
+                        <span class="item-tag">Acrylic Extensions</span>
+                        <h4 class="item-title">Sculpted Rose Gold Foil</h4>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Portfolio Item 2 -->
+            <div class="portfolio-item" data-category="gel">
+                <div class="portfolio-image-wrapper">
+                    <img src="assets/gel.jpg" alt="Short Lavender & Blush Gel Nails" class="portfolio-img" loading="lazy">
+                    <div class="portfolio-overlay">
+                        <span class="item-tag">Gel Manicure</span>
+                        <h4 class="item-title">Lavender & Blush Ombré</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Item 3 -->
+            <div class="portfolio-item" data-category="chrome">
+                <div class="portfolio-image-wrapper">
+                    <img src="assets/chrome.jpg" alt="Almond Glazed Chrome Nails" class="portfolio-img" loading="lazy">
+                    <div class="portfolio-overlay">
+                        <span class="item-tag">Glazed Chrome</span>
+                        <h4 class="item-title">Glossy Rose Gold Shimmer</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Item 4 -->
+            <div class="portfolio-item" data-category="art">
+                <div class="portfolio-image-wrapper">
+                    <img src="assets/art.jpg" alt="Hand Painted Custom White Floral Nails" class="portfolio-img" loading="lazy">
+                    <div class="portfolio-overlay">
+                        <span class="item-tag">Nail Art</span>
+                        <h4 class="item-title">White Lace Floral Details</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Booking Wizard Section -->
+    <section id="booking-section" class="booking">
+        <div class="section-header">
+            <span class="section-tagline">EASY RESERVATION</span>
+            <h2 class="section-title">Book an Appointment</h2>
+            <div class="section-divider"></div>
+        </div>
+
+        <div class="booking-wrapper">
+            <!-- Glassmorphic Booking Container -->
+            <div class="booking-container glass-panel">
+                <!-- Progress Stepper -->
+                <div class="stepper">
+                    <div class="step-indicator active" data-step="1">
+                        <div class="step-num">1</div>
+                        <span class="step-label">Service</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="step-indicator" data-step="2">
+                        <div class="step-num">2</div>
+                        <span class="step-label">Schedule</span>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="step-indicator" data-step="3">
+                        <div class="step-num">3</div>
+                        <span class="step-label">Details</span>
+                    </div>
+                </div>
+
+                <!-- Booking Form Form -->
+                <form id="booking-form" novalidate>
+                    <!-- STEP 1: SERVICE CHOICE -->
+                    <div class="booking-step active" id="step-1-content">
+                        <h3>Choose Service & Extras</h3>
+                        <div class="form-group">
+                            <label for="booking-service">Select Primary Service</label>
+                            <select id="booking-service" name="service" required>
+                                <option value="" disabled selected>-- Select a Service --</option>
+                                <option value="Gel Manicure" data-price="45">Gel Manicure - $45 (45 mins)</option>
+                                <option value="Acrylic Full Set" data-price="65">Acrylic Full Set - $65 (60 mins)</option>
+                                <option value="Glazed Chrome Gel" data-price="55">Glazed Chrome Gel - $55 (50 mins)</option>
+                                <option value="Custom Nail Art Set" data-price="75">Custom Nail Art Set - $75 (75 mins)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Optional Add-ons (Select multiple)</label>
+                            <div class="addons-grid">
+                                <label class="addon-card">
+                                    <input type="checkbox" name="addons" value="Matte Top Coat" data-price="5">
+                                    <span class="addon-name">Matte Top Coat</span>
+                                    <span class="addon-price">+$5</span>
+                                </label>
+                                <label class="addon-card">
+                                    <input type="checkbox" name="addons" value="Paraffin Treatment" data-price="15">
+                                    <span class="addon-name">Paraffin Treatment</span>
+                                    <span class="addon-price">+$15</span>
+                                </label>
+                                <label class="addon-card">
+                                    <input type="checkbox" name="addons" value="Rhinestone Studs (x10)" data-price="10">
+                                    <span class="addon-name">Rhinestones (x10)</span>
+                                    <span class="addon-price">+$10</span>
+                                </label>
+                                <label class="addon-card">
+                                    <input type="checkbox" name="addons" value="Nail Repair (Single)" data-price="8">
+                                    <span class="addon-name">Nail Repair</span>
+                                    <span class="addon-price">+$8</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="step-footer">
+                            <div></div>
+                            <button type="button" class="btn btn-primary btn-next" id="btn-to-step2">Choose Schedule <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: DATE AND TIME -->
+                    <div class="booking-step" id="step-2-content">
+                        <h3>Select Date & Time</h3>
+                        <div class="schedule-grid">
+                            <!-- Date Selector Column -->
+                            <div class="form-group">
+                                <label for="booking-date">Choose Date</label>
+                                <input type="date" id="booking-date" name="date" required>
+                                <div class="calendar-hint">Select any date (Tuesday - Saturday)</div>
+                            </div>
+                            
+                            <!-- Time Slot Selection Column -->
+                            <div class="form-group">
+                                <label>Available Slots</label>
+                                <div class="time-slots-container" id="slots-grid">
+                                    <!-- Populated dynamically via JS -->
+                                    <span class="no-date-msg">Please select a valid date first</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-footer">
+                            <button type="button" class="btn btn-secondary btn-prev" id="btn-back-to-step1"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                            <button type="button" class="btn btn-primary btn-next" id="btn-to-step3">Personal Details <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: DETAILS & CONFIRM -->
+                    <div class="booking-step" id="step-3-content">
+                        <h3>Your Contact Information</h3>
+                        <div class="details-grid">
+                            <div class="form-group">
+                                <label for="client-name">Full Name</label>
+                                <input type="text" id="client-name" name="name" placeholder="Enter your full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="client-email">Email Address</label>
+                                <input type="email" id="client-email" name="email" placeholder="example@email.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="client-phone">Phone Number</label>
+                                <input type="tel" id="client-phone" name="phone" placeholder="(123) 456-7890" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="client-notes">Special Requests / Notes</label>
+                                <textarea id="client-notes" name="notes" placeholder="Please describe any custom art ideas, nail lengths, or issues we should know about..." rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Mini Invoice Card -->
+                        <div class="mini-invoice glass-panel">
+                            <h4>Booking Summary</h4>
+                            <div class="invoice-row">
+                                <span id="invoice-service-name">Service: None Selected</span>
+                                <span id="invoice-service-price">$0.00</span>
+                            </div>
+                            <div id="invoice-addons-list"></div>
+                            <div class="invoice-row invoice-total">
+                                <span>Estimated Total:</span>
+                                <span id="invoice-total-amount">$0.00</span>
+                            </div>
+                            <div class="invoice-row datetime-summary">
+                                <span><i class="fa-regular fa-calendar-days"></i> <span id="invoice-date">--</span></span>
+                                <span><i class="fa-regular fa-clock"></i> <span id="invoice-time">--</span></span>
+                            </div>
+                        </div>
+
+                        <div class="step-footer">
+                            <button type="button" class="btn btn-secondary btn-prev" id="btn-back-to-step2"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                            <button type="submit" class="btn btn-primary btn-submit" id="btn-submit-booking">Confirm Booking <i class="fa-solid fa-circle-check"></i></button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- STEP 4: SUCCESS MODAL / BOX -->
+                <div class="booking-success-box" id="success-box">
+                    <div class="success-icon-wrapper">
+                        <i class="fa-solid fa-circle-check animated-checkmark"></i>
+                    </div>
+                    <h2>Appointment Requested!</h2>
+                    <p class="success-lead">We have reserved your temporary slot. A confirmation ticket has been generated below.</p>
+                    
+                    <!-- Ticket Receipt Graphic -->
+                    <div class="ticket glass-panel">
+                        <div class="ticket-header">
+                            <h4>NDI'S NAIL BAR</h4>
+                            <span class="ticket-status">CONFIRMED</span>
+                        </div>
+                        <div class="ticket-divider"></div>
+                        <div class="ticket-body">
+                            <div class="ticket-info">
+                                <span class="label">CLIENT</span>
+                                <span class="value" id="ticket-client-name">--</span>
+                            </div>
+                            <div class="ticket-info">
+                                <span class="label">BOOKING ID</span>
+                                <span class="value code" id="ticket-id">--</span>
+                            </div>
+                            <div class="ticket-info">
+                                <span class="label">SERVICE</span>
+                                <span class="value" id="ticket-service">--</span>
+                            </div>
+                            <div class="ticket-info">
+                                <span class="label">DATE & TIME</span>
+                                <span class="value" id="ticket-datetime">--</span>
+                            </div>
+                            <div class="ticket-info">
+                                <span class="label">TOTAL ESTIMATED PRICE</span>
+                                <span class="value accent-text bold" id="ticket-price">--</span>
+                            </div>
+                        </div>
+                        <div class="ticket-notch-row">
+                            <div class="ticket-notch left"></div>
+                            <div class="ticket-notch right"></div>
+                        </div>
+                        <div class="ticket-footer">
+                            <p>Thank you for choosing Ndi's Nail Bar. Please arrive 10 minutes prior to your session.</p>
+                            <div class="barcode"><i class="fa-solid fa-barcode"></i></div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary btn-new-booking" id="btn-reset-booking">Book Another Session</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ratings & Star Reviews Section (at the bottom) -->
+    <section id="reviews" class="reviews">
+        <div class="section-header">
+            <span class="section-tagline">CLIENT TESTIMONIALS</span>
+            <h2 class="section-title">Ratings & Reviews</h2>
+            <div class="section-divider"></div>
+        </div>
+
+        <div class="reviews-wrapper">
+            <!-- Ratings Stats Dashboard -->
+            <div class="ratings-dashboard glass-panel">
+                <div class="overall-rating-box">
+                    <span class="big-rating" id="avg-rating-value">4.9</span>
+                    <div class="rating-stars-row" id="avg-stars-container">
+                        <!-- Stars will be injected by JS -->
+                    </div>
+                    <span class="total-reviews-count" id="total-reviews-count">Based on 124 reviews</span>
+                </div>
+                
+                <div class="rating-breakdown">
+                    <div class="breakdown-row">
+                        <span>5 stars</span>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 90%;"></div></div>
+                        <span class="breakdown-pct">90%</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>4 stars</span>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 8%;"></div></div>
+                        <span class="breakdown-pct">8%</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>3 stars</span>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 2%;"></div></div>
+                        <span class="breakdown-pct">2%</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>2 stars</span>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 0%;"></div></div>
+                        <span class="breakdown-pct">0%</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>1 star</span>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 0%;"></div></div>
+                        <span class="breakdown-pct">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Feed -->
+            <div class="reviews-feed" id="reviews-feed-container">
+                <!-- Sample Static Review 1 -->
+                <div class="review-card glass-panel">
+                    <div class="review-header">
+                        <div class="review-author">
+                            <span class="author-avatar">S</span>
+                            <div>
+                                <h4 class="author-name">Sophia Alvarez</h4>
+                                <span class="review-date">Aug 12, 2026</span>
+                            </div>
+                        </div>
+                        <div class="review-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    </div>
+                    <p class="review-body">Ndi is a absolute magician! I got the glazed chrome gel manicure and the shimmer is perfect. The studio is extremely clean and welcoming.</p>
+                </div>
+
+                <!-- Sample Static Review 2 -->
+                <div class="review-card glass-panel">
+                    <div class="review-header">
+                        <div class="review-author">
+                            <span class="author-avatar">K</span>
+                            <div>
+                                <h4 class="author-name">Keira Knight</h4>
+                                <span class="review-date">Aug 08, 2026</span>
+                            </div>
+                        </div>
+                        <div class="review-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    </div>
+                    <p class="review-body">My acrylic full set looks incredibly natural. Ndi paid such close attention to the length and custom gold foil styling. Worth every single penny!</p>
+                </div>
+            </div>
+
+            <!-- Review Writing Modal / Form Panel -->
+            <div class="write-review-panel glass-panel">
+                <h3>Share Your Experience</h3>
+                <form id="review-form">
+                    <div class="form-group">
+                        <label>Your Overall Rating</label>
+                        <div class="star-rating-select" id="star-rating-selector">
+                            <button type="button" class="star-select-btn" data-rating="1" aria-label="1 star"><i class="fa-regular fa-star"></i></button>
+                            <button type="button" class="star-select-btn" data-rating="2" aria-label="2 stars"><i class="fa-regular fa-star"></i></button>
+                            <button type="button" class="star-select-btn" data-rating="3" aria-label="3 stars"><i class="fa-regular fa-star"></i></button>
+                            <button type="button" class="star-select-btn" data-rating="4" aria-label="4 stars"><i class="fa-regular fa-star"></i></button>
+                            <button type="button" class="star-select-btn active" data-rating="5" aria-label="5 stars"><i class="fa-solid fa-star"></i></button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="review-author-name">Your Name</label>
+                        <input type="text" id="review-author-name" placeholder="E.g. Emily Watson" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="review-text">Review Content</label>
+                        <textarea id="review-text" rows="4" placeholder="How did you like Ndi's work? Tell everyone about your manicure..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-submit-review">Submit Review <i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-top">
+            <div class="footer-col brand-col">
+                <h2>NDI'S <span class="accent-text">NAIL BAR</span></h2>
+                <p class="salon-bio">An elite nail lounge offering tailor-made luxury manicure service, custom fine nail art designs, and unmatched clean sanitization standards.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="#" aria-label="Pinterest"><i class="fa-brands fa-pinterest"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-col hours-col">
+                <h3>Salon Hours</h3>
+                <ul class="hours-list">
+                    <li><span>Monday:</span> <span class="closed">Closed</span></li>
+                    <li><span>Tuesday - Thursday:</span> <span>10:00 AM - 7:00 PM</span></li>
+                    <li><span>Friday:</span> <span>9:00 AM - 8:00 PM</span></li>
+                    <li><span>Saturday:</span> <span>9:00 AM - 6:00 PM</span></li>
+                    <li><span>Sunday:</span> <span class="closed">Closed</span></li>
+                </ul>
+            </div>
+            
+            <div class="footer-col contact-col">
+                <h3>Location & Contact</h3>
+                <p><i class="fa-solid fa-location-dot"></i> 742 Luxe Blvd, Suite A<br>Metropolis, NY 10001</p>
+                <p><i class="fa-solid fa-phone"></i> +1 (555) LUXE-NDI</p>
+                <p><i class="fa-solid fa-envelope"></i> hello@ndisnailbar.com</p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2026 Ndi's Nail Bar. All Rights Reserved. Crafted with care for premium clients.</p>
+        </div>
+    </footer>
+
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+</html>
