@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Ndi's Nail Bar</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Montserrat:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+
+    <!-- LOGIN PANEL SCREEN -->
+    <div class="login-screen" id="login-container">
+        <div class="login-card glass-panel">
+            <h2>Luxe Admin</h2>
+            <p>Access Ndi's Nail Bar dashboard panel</p>
+            
+            <div class="login-error-msg" id="login-error">
+                <i class="fa-solid fa-circle-exclamation"></i> Invalid email or password.
+            </div>
+            
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label for="admin-email">Admin Email</label>
+                    <input type="email" id="admin-email" placeholder="admin@ndisnailbar.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin-password">Password</label>
+                    <input type="password" id="admin-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-login">Sign In <i class="fa-solid fa-right-to-bracket"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div class="admin-wrapper" id="dashboard-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-brand">
+                <h2>NDI'S <span class="accent-text">ADMIN</span></h2>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-tab="overview">
+                    <button><i class="fa-solid fa-chart-line"></i> Overview</button>
+                </li>
+                <li class="menu-item" data-tab="bookings">
+                    <button><i class="fa-solid fa-calendar-check"></i> Bookings</button>
+                </li>
+                <li class="menu-item" data-tab="reviews">
+                    <button><i class="fa-solid fa-star-half-stroke"></i> Reviews</button>
+                </li>
+                <li class="menu-item" data-tab="uploader">
+                    <button><i class="fa-solid fa-images"></i> Add Design</button>
+                </li>
+                <li class="menu-item logout-item" id="btn-logout">
+                    <button><i class="fa-solid fa-power-off"></i> Logout</button>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="admin-main">
+            <!-- Header Bar -->
+            <header class="admin-header">
+                <div class="admin-title">
+                    <h1 id="tab-heading">Dashboard Overview</h1>
+                    <p id="tab-description">Monitor your bookings, moderate customer ratings, and update your gallery.</p>
+                </div>
+                
+                <div class="admin-profile">
+                    <div class="admin-avatar">N</div>
+                    <div>
+                        <div class="admin-name">Ndi</div>
+                        <div class="admin-role">Studio Owner</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- TAB 1: OVERVIEW -->
+            <div class="tab-content active" id="overview-tab">
+                <!-- Quick Stats -->
+                <div class="stats-row">
+                    <div class="stat-card glass-panel">
+                        <div class="stat-header">
+                            <span>Total Bookings</span>
+                            <i class="fa-solid fa-calendar-days stat-icon"></i>
+                        </div>
+                        <div class="stat-value" id="stat-total-bookings">0</div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-header">
+                            <span>Pending Slots</span>
+                            <i class="fa-solid fa-hourglass-half stat-icon"></i>
+                        </div>
+                        <div class="stat-value" id="stat-pending-bookings">0</div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-header">
+                            <span>Average Rating</span>
+                            <i class="fa-solid fa-star stat-icon"></i>
+                        </div>
+                        <div class="stat-value" id="stat-avg-rating">4.9</div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-header">
+                            <span>Nail Designs</span>
+                            <i class="fa-solid fa-wand-magic-sparkles stat-icon"></i>
+                        </div>
+                        <div class="stat-value" id="stat-gallery-count">0</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities Panel -->
+                <div class="glass-panel" style="padding: 35px; margin-top: 30px;">
+                    <h3>Welcome to Ndi's Nail Bar Admin Control</h3>
+                    <p style="font-size: 0.9rem; color: var(--color-text-muted); margin: 15px 0 25px; line-height: 1.7; font-weight: 300;">
+                        Use the sidebar menu to navigate between sections. Here is what you can do:
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                        <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: var(--color-rose-gold-dark);"><i class="fa-solid fa-calendar-check"></i> Manage Bookings</h4>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 300;">Review date and time requests, confirm new sessions, or mark appointments as completed.</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: var(--color-rose-gold-dark);"><i class="fa-solid fa-star-half-stroke"></i> Moderate Reviews</h4>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 300;">Approve client reviews to show them live on the homepage, or delete spam submissions.</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: var(--color-rose-gold-dark);"><i class="fa-solid fa-images"></i> Upload Nail Art</h4>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 300;">Add photos of your work directly to the website gallery, and tag them by style category.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: BOOKINGS LIST -->
+            <div class="tab-content" id="bookings-tab">
+                <div class="bookings-controls">
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="booking-search" placeholder="Search by client name...">
+                    </div>
+                    
+                    <div class="filter-select">
+                        <select id="booking-status-filter">
+                            <option value="all">All Bookings</option>
+                            <option value="pending">Pending Requests</option>
+                            <option value="confirmed">Confirmed Sessions</option>
+                            <option value="completed">Completed Sessions</option>
+                            <option value="cancelled">Cancelled Sessions</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Client Name</th>
+                                <th>Service</th>
+                                <th>Add-ons</th>
+                                <th>Date & Time</th>
+                                <th>Total Price</th>
+                                <th>Notes</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-table-body">
+                            <!-- Populated dynamically via JS -->
+                            <tr>
+                                <td colspan="9" class="no-records-msg">Loading bookings...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 3: REVIEWS MODERATION -->
+            <div class="tab-content" id="reviews-tab">
+                <div class="reviews-moderation-grid" id="pending-reviews-container">
+                    <!-- Populated dynamically via JS -->
+                    <div class="no-records-msg">Loading pending reviews...</div>
+                </div>
+            </div>
+
+            <!-- TAB 4: PORTFOLIO GALLERY UPLOADER -->
+            <div class="tab-content" id="uploader-tab">
+                <div class="uploader-container glass-panel">
+                    <h3>Upload New Nail Art Design</h3>
+                    <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 25px; font-weight: 300;">Fill out details below and select a JPEG/PNG file to publish it directly to the gallery.</p>
+                    
+                    <form id="nail-upload-form">
+                        <div class="form-group">
+                            <label for="nail-title">Design Title</label>
+                            <input type="text" id="nail-title" placeholder="E.g. Holographic Chrome Tip" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="nail-category">Gallery Category</label>
+                            <select id="nail-category" required>
+                                <option value="" disabled selected>-- Choose Category --</option>
+                                <option value="gel">Gel Manicure</option>
+                                <option value="acrylic">Acrylic Extensions</option>
+                                <option value="chrome">Glazed Chrome</option>
+                                <option value="art">Custom Nail Art</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Nail Photo</label>
+                            <div class="file-upload-zone" id="drop-zone">
+                                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                                <p style="font-weight: 500; font-size: 0.9rem;">Drag & drop photo here or click to browse</p>
+                                <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 5px;">Supports JPEG, PNG, or WEBP (Max 5MB)</p>
+                                <input type="file" id="nail-file-input" accept="image/*" required>
+                                <img id="upload-preview" class="file-preview" alt="Selected Nail Design Preview">
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="upload-progress-container" id="upload-progress-container">
+                            <div class="upload-progress-bar" id="upload-progress-bar"></div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-publish-nail" id="btn-submit-upload">Publish to Gallery <i class="fa-solid fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDK Imports & Controller JS -->
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

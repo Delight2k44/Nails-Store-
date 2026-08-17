@@ -1,0 +1,621 @@
+/* ==========================================
+   NDI'S NAIL BAR - ADMIN DASHBOARD STYLING
+   ========================================== */
+
+/* Reuse core tokens & colors */
+@import url('styles.css');
+
+body.admin-body {
+    background-color: var(--color-bg-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+    background-image: 
+        radial-gradient(at 100% 0%, rgba(244, 214, 203, 0.25) 0px, transparent 40%),
+        radial-gradient(at 0% 100%, rgba(228, 181, 162, 0.15) 0px, transparent 50%);
+}
+
+/* --- Login Modal Screen --- */
+.login-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(30, 22, 19, 0.65) 0%, rgba(30, 22, 19, 0.4) 100%),
+                url('assets/hero.jpg') no-repeat center center/cover;
+    z-index: 2000;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 45px;
+    text-align: center;
+}
+
+.login-card h2 {
+    font-size: 2.2rem;
+    color: var(--color-text-dark);
+    margin-bottom: 8px;
+}
+
+.login-card p {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-bottom: 30px;
+}
+
+.login-card .form-group {
+    text-align: left;
+}
+
+.login-card input {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.btn-login {
+    width: 100%;
+    margin-top: 15px;
+    padding: 14px;
+}
+
+.login-error-msg {
+    color: #c62828;
+    background-color: rgba(198, 40, 40, 0.08);
+    border: 1px solid rgba(198, 40, 40, 0.15);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    margin-bottom: 20px;
+    display: none;
+}
+
+/* --- Dashboard Layout --- */
+.admin-wrapper {
+    display: none; /* hidden until authenticated */
+    flex-grow: 1;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+}
+
+.admin-wrapper.active {
+    display: grid;
+}
+
+/* --- Sidebar --- */
+.admin-sidebar {
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-light);
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-brand h2 {
+    font-size: 1.5rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.sidebar-menu {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.menu-item button {
+    width: 100%;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: var(--transition-fast);
+}
+
+.menu-item button i {
+    font-size: 1.1rem;
+    width: 20px;
+}
+
+.menu-item button:hover,
+.menu-item.active button {
+    background-color: rgba(255, 255, 255, 0.07);
+    color: var(--color-rose-gold-light);
+}
+
+.menu-item.logout-item {
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 20px;
+}
+
+.menu-item.logout-item button {
+    color: #e57373;
+}
+
+.menu-item.logout-item button:hover {
+    background-color: rgba(229, 115, 115, 0.08);
+}
+
+/* --- Main Dashboard Panel --- */
+.admin-main {
+    padding: 50px;
+    overflow-y: auto;
+    max-height: 100vh;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    border-bottom: 1px solid rgba(200, 143, 123, 0.15);
+    padding-bottom: 20px;
+}
+
+.admin-title h1 {
+    font-size: 2.8rem;
+    color: var(--color-text-dark);
+}
+
+.admin-title p {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+/* Admin Profile Quick View */
+.admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.admin-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-rose-gold), var(--color-rose-gold-dark));
+    color: var(--color-text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.admin-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.admin-role {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+/* --- Dashboard Tab Panels --- */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeInStep 0.4s ease-out forwards;
+}
+
+/* Stats Row Widgets */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    padding: 30px;
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 15px;
+}
+
+.stat-icon {
+    font-size: 1.3rem;
+    color: var(--color-rose-gold-dark);
+}
+
+.stat-value {
+    font-size: 2.4rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    color: var(--color-text-dark);
+    line-height: 1.1;
+}
+
+/* --- BOOKINGS MANAGEMENT TABLE --- */
+.bookings-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.search-bar {
+    position: relative;
+    max-width: 300px;
+    width: 100%;
+}
+
+.search-bar input {
+    padding: 10px 15px 10px 40px;
+}
+
+.search-bar i {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+}
+
+.filter-select select {
+    padding: 10px 30px 10px 15px;
+    font-size: 0.8rem;
+    width: auto;
+}
+
+/* The Table */
+.table-responsive {
+    overflow-x: auto;
+    box-shadow: var(--glass-shadow);
+    border-radius: var(--radius-md);
+    background: var(--glass-bg);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 18px 24px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(200, 143, 123, 0.1);
+}
+
+.admin-table th {
+    background-color: rgba(30, 22, 19, 0.03);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+}
+
+.admin-table tr:hover td {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.admin-table td .addons-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 200px;
+}
+
+.tag-addon {
+    font-size: 0.65rem;
+    background: rgba(200, 143, 123, 0.08);
+    color: var(--color-rose-gold-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(200, 143, 123, 0.15);
+}
+
+.booking-notes-col {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text-muted);
+}
+
+/* Status Tags */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+}
+
+.status-badge.pending {
+    background-color: rgba(245, 124, 0, 0.12);
+    color: #ef6c00;
+}
+
+.status-badge.confirmed {
+    background-color: rgba(76, 175, 80, 0.12);
+    color: #2e7d32;
+}
+
+.status-badge.completed {
+    background-color: rgba(33, 150, 243, 0.12);
+    color: #1565c0;
+}
+
+.status-badge.cancelled {
+    background-color: rgba(244, 67, 54, 0.12);
+    color: #c62828;
+}
+
+/* Action Dropdowns / Buttons */
+.table-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    transition: var(--transition-fast);
+}
+
+.btn-icon:hover {
+    background-color: #ffffff;
+    transform: scale(1.05);
+}
+
+.btn-icon.confirm:hover {
+    color: #2e7d32;
+    border-color: #2e7d32;
+    background-color: rgba(76, 175, 80, 0.08);
+}
+
+.btn-icon.complete:hover {
+    color: #1565c0;
+    border-color: #1565c0;
+    background-color: rgba(33, 150, 243, 0.08);
+}
+
+.btn-icon.cancel:hover {
+    color: #c62828;
+    border-color: #c62828;
+    background-color: rgba(244, 67, 54, 0.08);
+}
+
+.no-records-msg {
+    text-align: center;
+    padding: 50px 0;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+/* --- REVIEWS MODERATION PANEL --- */
+.reviews-moderation-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 800px;
+}
+
+.moderation-card {
+    padding: 30px;
+}
+
+.moderation-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+    border-top: 1px solid rgba(200, 143, 123, 0.15);
+    padding-top: 15px;
+}
+
+.btn-mod-approve {
+    background-color: rgba(76, 175, 80, 0.08);
+    color: #2e7d32;
+    border: 1px solid rgba(76, 175, 80, 0.25);
+    padding: 8px 18px;
+    font-size: 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-mod-approve:hover {
+    background-color: #2e7d32;
+    color: #ffffff;
+    border-color: transparent;
+}
+
+.btn-mod-delete {
+    background-color: rgba(244, 67, 54, 0.08);
+    color: #c62828;
+    border: 1px solid rgba(244, 67, 54, 0.25);
+    padding: 8px 18px;
+    font-size: 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-mod-delete:hover {
+    background-color: #c62828;
+    color: #ffffff;
+    border-color: transparent;
+}
+
+/* --- GALLERY PORTFOLIO UPLOADER --- */
+.uploader-container {
+    max-width: 600px;
+    padding: 40px;
+}
+
+.file-upload-zone {
+    border: 2px dashed var(--color-rose-gold-light);
+    background: rgba(255, 255, 255, 0.35);
+    padding: 40px;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    position: relative;
+}
+
+.file-upload-zone:hover {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: var(--color-rose-gold);
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: var(--color-rose-gold);
+    margin-bottom: 15px;
+}
+
+.file-upload-zone input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-preview {
+    margin-top: 15px;
+    display: none;
+    max-height: 200px;
+    max-width: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.btn-publish-nail {
+    width: 100%;
+    margin-top: 25px;
+}
+
+/* Progress bar for upload */
+.upload-progress-container {
+    width: 100%;
+    height: 8px;
+    background: rgba(200, 143, 123, 0.1);
+    border-radius: 4px;
+    margin-top: 15px;
+    display: none;
+    overflow: hidden;
+}
+
+.upload-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--color-rose-gold-light), var(--color-rose-gold));
+    border-radius: 4px;
+    transition: width 0.1s ease-out;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 1024px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    body.admin-body {
+        flex-direction: column;
+    }
+    
+    .admin-wrapper {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-sidebar {
+        padding: 20px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .sidebar-brand h2 {
+        margin-bottom: 20px;
+    }
+    
+    .sidebar-menu {
+        flex-direction: row;
+        justify-content: space-around;
+        flex-wrap: wrap;
+    }
+    
+    .menu-item button {
+        padding: 10px 15px;
+        font-size: 0.75rem;
+    }
+    
+    .menu-item.logout-item {
+        margin-top: 0;
+        border-top: none;
+        padding-top: 0;
+    }
+    
+    .admin-main {
+        padding: 25px;
+    }
+    
+    .admin-title h1 {
+        font-size: 2.2rem;
+    }
+    
+    .stats-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}

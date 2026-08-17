@@ -1,6 +1,18 @@
 /* ==========================================
    NDI'S NAIL BAR - INTERACTIVE FRONTEND LOGIC
+   (CONNECTED TO FIREBASE CLOUD SERVICES)
    ========================================== */
+
+import { db } from "./firebase-config.js";
+import { 
+    collection, 
+    addDoc, 
+    onSnapshot, 
+    query, 
+    where, 
+    orderBy, 
+    Timestamp 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
@@ -62,45 +74,126 @@ function initNavigation() {
 }
 
 /* ==========================================
-   2. PORTFOLIO GALLERY FILTERS
+   2. PORTFOLIO GALLERY FILTERS (FIRESTORE DRIVEN)
    ========================================== */
+const defaultNails = [
+    {
+        title: "Sculpted Rose Gold Foil",
+        category: "acrylic",
+        imageUrl: "assets/acrylic.jpg"
+    },
+    {
+        title: "Lavender & Blush Ombré",
+        category: "gel",
+        imageUrl: "assets/gel.jpg"
+    },
+    {
+        title: "Glossy Rose Gold Shimmer",
+        category: "chrome",
+        imageUrl: "assets/chrome.jpg"
+    },
+    {
+        title: "White Lace Floral Details",
+        category: "art",
+        imageUrl: "assets/art.jpg"
+    }
+];
+
 function initPortfolioFilter() {
     const filterButtons = document.querySelectorAll('.filter-btn');
-    const portfolioItems = document.querySelectorAll('.portfolio-item');
 
+    // Filter Buttons Click Routing
     filterButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            // Update active button
             filterButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
-            const filterValue = btn.getAttribute('data-filter');
-
-            portfolioItems.forEach(item => {
-                const category = item.getAttribute('data-category');
-                
-                // Add fade-out transition
-                item.style.transform = 'scale(0.8)';
-                item.style.opacity = '0';
-                
-                setTimeout(() => {
-                    if (filterValue === 'all' || category === filterValue) {
-                        item.style.display = 'block';
-                        setTimeout(() => {
-                            item.style.transform = 'scale(1)';
-                            item.style.opacity = '1';
-                        }, 50);
-                    } else {
-                        item.style.display = 'none';
-                    }
-                }, 300);
-            });
+            applyActiveFilter();
         });
+    });
+
+    // Listen for Nail Designs in Firestore in real-time
+    const nailsQuery = query(collection(db, "nails"), orderBy("createdAt", "desc"));
+    onSnapshot(nailsQuery, (snapshot) => {
+        let nails = [];
+        snapshot.forEach(doc => {
+            nails.push(doc.data());
+        });
+
+        // Fall back to default mock nails if Firestore collection is empty
+        if (nails.length === 0) {
+            nails = defaultNails;
+        }
+
+        renderPortfolioGrid(nails);
+    }, (err) => {
+        console.warn("Nails fetch error: falling back to defaults.", err);
+        renderPortfolioGrid(defaultNails);
+    });
+}
+
+function renderPortfolioGrid(nails) {
+    const gridContainer = document.querySelector('.portfolio-grid');
+    if (!gridContainer) return;
+
+    gridContainer.innerHTML = '';
+
+    nails.forEach(nail => {
+        const item = document.createElement('div');
+        item.className = 'portfolio-item';
+        item.setAttribute('data-category', nail.category);
+        
+        const categoryLabels = {
+            gel: "Gel Manicure",
+            acrylic: "Acrylic Extensions",
+            chrome: "Glazed Chrome",
+            art: "Nail Art"
+        };
+        const label = categoryLabels[nail.category] || "Nail Art";
+
+        item.innerHTML = `
+            <div class="portfolio-image-wrapper">
+                <img src="${nail.imageUrl}" alt="${nail.title}" class="portfolio-img" loading="lazy">
+                <div class="portfolio-overlay">
+                    <span class="item-tag">${label}</span>
+                    <h4 class="item-title">${nail.title}</h4>
+                </div>
+            </div>
+        `;
+        gridContainer.appendChild(item);
+    });
+
+    // Re-apply filter tags
+    applyActiveFilter();
+}
+
+function applyActiveFilter() {
+    const activeFilterBtn = document.querySelector('.filter-btn.active');
+    if (!activeFilterBtn) return;
+
+    const filterValue = activeFilterBtn.getAttribute('data-filter');
+    const portfolioItems = document.querySelectorAll('.portfolio-item');
+
+    portfolioItems.forEach(item => {
+        const category = item.getAttribute('data-category');
+        
+        if (filterValue === 'all' || category === filterValue) {
+            item.style.display = 'block';
+            setTimeout(() => {
+                item.style.transform = 'scale(1)';
+                item.style.opacity = '1';
+            }, 50);
+        } else {
+            item.style.transform = 'scale(0.8)';
+            item.style.opacity = '0';
+            setTimeout(() => {
+                item.style.display = 'none';
+            }, 300);
+        }
     });
 }
 
 /* ==========================================
-   3. MULTI-STEP BOOKING WIZARD
+   3. MULTI-STEP BOOKING WIZARD (FIRESTORE DRIVEN)
    ========================================== */
 function initBookingWizard() {
     const bookingForm = document.getElementById('booking-form');
@@ -145,10 +238,8 @@ function initBookingWizard() {
         btn.addEventListener('click', (e) => {
             const service = btn.getAttribute('data-service');
             serviceSelect.value = service;
-            // Trigger change event to update price
             serviceSelect.dispatchEvent(new Event('change'));
             
-            // Scroll to booking and go directly to step 2
             document.getElementById('booking-section').scrollIntoView({ behavior: 'smooth' });
             goToStep(2);
         });
@@ -182,7 +273,7 @@ function initBookingWizard() {
     // Handle Date Selection and Time Slot Generation
     dateInput.addEventListener('change', () => {
         const dateValue = new Date(dateInput.value);
-        const day = dateValue.getDay(); // 0 is Sunday, 1 is Monday
+        const day = dateValue.getDay(); 
 
         slotsGrid.innerHTML = '';
         bookingState.date = dateInput.value;
@@ -208,7 +299,7 @@ function initBookingWizard() {
             btn.className = 'time-slot-btn';
             btn.innerText = slot;
 
-            // Randomly flag a slot as already booked to make it realistic (except first/second slot to keep it easy to book)
+            // Randomly flag a slot as already booked to make it realistic
             const isBooked = index > 1 && Math.random() < 0.35;
             if (isBooked) {
                 btn.disabled = true;
@@ -237,11 +328,9 @@ function initBookingWizard() {
         const invoiceDate = document.getElementById('invoice-date');
         const invoiceTime = document.getElementById('invoice-time');
 
-        // Service
         invoiceService.innerText = bookingState.serviceName || 'Service: None Selected';
         invoiceServicePrice.innerText = `$${bookingState.servicePrice.toFixed(2)}`;
 
-        // Addons
         invoiceAddons.innerHTML = '';
         let addonsTotal = 0;
         bookingState.addons.forEach(addon => {
@@ -252,19 +341,16 @@ function initBookingWizard() {
             invoiceAddons.appendChild(item);
         });
 
-        // Total
         bookingState.totalPrice = bookingState.servicePrice + addonsTotal;
         invoiceTotal.innerText = `$${bookingState.totalPrice.toFixed(2)}`;
 
-        // Datetime
         invoiceDate.innerText = bookingState.date || '--';
         invoiceTime.innerText = bookingState.timeSlot || '--';
     }
 
-    // Step Transition Validator & Engine
+    // Step Transition Validator
     function goToStep(targetStep) {
         if (targetStep > bookingState.step) {
-            // Validation rules when going forward
             if (bookingState.step === 1 && !serviceSelect.value) {
                 alert('Please select a primary service to proceed.');
                 return;
@@ -281,16 +367,12 @@ function initBookingWizard() {
             }
         }
 
-        // Perform Transition
         steps.forEach(stepBox => stepBox.classList.remove('active'));
         indicators.forEach(indicator => indicator.classList.remove('active', 'completed'));
 
         bookingState.step = targetStep;
-        
-        // Update Step contents
         document.getElementById(`step-${targetStep}-content`).classList.add('active');
 
-        // Update Stepper header graphics
         indicators.forEach((indicator, index) => {
             const stepNum = index + 1;
             if (stepNum === targetStep) {
@@ -301,17 +383,15 @@ function initBookingWizard() {
         });
     }
 
-    // Navigation buttons wiring
     btnToStep2.addEventListener('click', () => goToStep(2));
     btnToStep3.addEventListener('click', () => goToStep(3));
     btnBackToStep1.addEventListener('click', () => goToStep(1));
     btnBackToStep2.addEventListener('click', () => goToStep(2));
 
-    // Submit Action
+    // Submit Booking to Firestore
     bookingForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        // Final input validations
         if (!clientNameInput.value.trim()) {
             alert('Please enter your full name.');
             return;
@@ -325,39 +405,56 @@ function initBookingWizard() {
             return;
         }
 
-        // Fill bookingState
         bookingState.clientName = clientNameInput.value.trim();
         bookingState.clientEmail = clientEmailInput.value.trim();
         bookingState.clientPhone = clientPhoneInput.value.trim();
         bookingState.notes = document.getElementById('client-notes').value.trim();
 
-        // Save Booking in localStorage
-        const bookingsList = JSON.parse(localStorage.getItem('ndis_nail_bookings') || '[]');
+        const btnSubmit = document.getElementById('btn-submit-booking');
+        const origText = btnSubmit.innerHTML;
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Reserving Slot...';
+
         const bookingId = 'NB-' + Math.floor(10000 + Math.random() * 90000);
         
         const bookingData = {
             id: bookingId,
             clientName: bookingState.clientName,
+            clientEmail: bookingState.clientEmail,
+            clientPhone: bookingState.clientPhone,
             service: bookingState.serviceName,
             addons: bookingState.addons.map(a => a.name),
             date: bookingState.date,
             time: bookingState.timeSlot,
-            totalPrice: bookingState.totalPrice
+            totalPrice: bookingState.totalPrice,
+            notes: bookingState.notes,
+            status: "pending", // Starts as pending
+            createdAt: Timestamp.now()
         };
-        bookingsList.push(bookingData);
-        localStorage.setItem('ndis_nail_bookings', JSON.stringify(bookingsList));
 
-        // Inject data into ticket receipt
-        document.getElementById('ticket-client-name').innerText = bookingState.clientName;
-        document.getElementById('ticket-id').innerText = bookingId;
-        document.getElementById('ticket-service').innerText = bookingState.serviceName + (bookingState.addons.length ? ` (+${bookingState.addons.length} Add-ons)` : '');
-        document.getElementById('ticket-datetime').innerText = `${bookingState.date} @ ${bookingState.timeSlot}`;
-        document.getElementById('ticket-price').innerText = `$${bookingState.totalPrice.toFixed(2)}`;
+        // Write to Firestore Database
+        addDoc(collection(db, "bookings"), bookingData)
+            .then(() => {
+                // Success: update receipt details
+                document.getElementById('ticket-client-name').innerText = bookingState.clientName;
+                document.getElementById('ticket-id').innerText = bookingId;
+                document.getElementById('ticket-service').innerText = bookingState.serviceName + (bookingState.addons.length ? ` (+${bookingState.addons.length} Add-ons)` : '');
+                document.getElementById('ticket-datetime').innerText = `${bookingState.date} @ ${bookingState.timeSlot}`;
+                document.getElementById('ticket-price').innerText = `$${bookingState.totalPrice.toFixed(2)}`;
 
-        // Hide wizard forms, show animated ticket
-        bookingForm.style.display = 'none';
-        document.querySelector('.stepper').style.display = 'none';
-        successBox.classList.add('active');
+                // Render success screens
+                bookingForm.style.display = 'none';
+                document.querySelector('.stepper').style.display = 'none';
+                successBox.classList.add('active');
+            })
+            .catch(err => {
+                console.error("Booking submit failed:", err);
+                alert("We ran into a database error saving your appointment slot. Please try again.");
+            })
+            .finally(() => {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origText;
+            });
     });
 
     // Reset Booking Wizard
@@ -377,7 +474,6 @@ function initBookingWizard() {
             totalPrice: 0
         };
 
-        // Reset display structures
         addOnCheckboxes.forEach(cb => cb.checked = false);
         slotsGrid.innerHTML = '<span class="no-date-msg">Please select a valid date first</span>';
         updateInvoice();
@@ -390,8 +486,29 @@ function initBookingWizard() {
 }
 
 /* ==========================================
-   4. RATINGS & STAR REVIEWS SYSTEM (LOCALSTORAGE BACKED)
+   4. RATINGS & REVIEWS (FIRESTORE DRIVEN)
    ========================================== */
+const defaultReviews = [
+    {
+        name: 'Sophia Alvarez',
+        rating: 5,
+        content: "Ndi is an absolute magician! I got the glazed chrome gel manicure and the shimmer is perfect. The studio is extremely clean and welcoming.",
+        date: 'Aug 12, 2026'
+    },
+    {
+        name: 'Keira Knight',
+        rating: 5,
+        content: "My acrylic full set looks incredibly natural. Ndi paid such close attention to the length and custom gold foil styling. Worth every single penny!",
+        date: 'Aug 08, 2026'
+    },
+    {
+        name: 'Mila Kunis',
+        rating: 4,
+        content: "Beautiful custom line art! Ndi is highly skilled. The session ran about 10 minutes over but the quality and precision made up for it. Highly recommend.",
+        date: 'Jul 30, 2026'
+    }
+];
+
 function initReviewsSystem() {
     const reviewForm = document.getElementById('review-form');
     const reviewText = document.getElementById('review-text');
@@ -401,7 +518,7 @@ function initReviewsSystem() {
 
     let currentFormRating = 5;
 
-    // Star Selection Logic in review form
+    // Star Select button routing
     if (starsSelector) {
         const starButtons = starsSelector.querySelectorAll('.star-select-btn');
         starButtons.forEach(btn => {
@@ -409,7 +526,6 @@ function initReviewsSystem() {
                 const rating = parseInt(btn.getAttribute('data-rating'));
                 currentFormRating = rating;
 
-                // Color stars up to active one
                 starButtons.forEach(b => {
                     const bRating = parseInt(b.getAttribute('data-rating'));
                     const icon = b.querySelector('i');
@@ -426,40 +542,33 @@ function initReviewsSystem() {
         });
     }
 
-    // Default Starting Reviews (If localStorage is empty)
-    const defaultReviews = [
-        {
-            name: 'Sophia Alvarez',
-            rating: 5,
-            content: "Ndi is an absolute magician! I got the glazed chrome gel manicure and the shimmer is perfect. The studio is extremely clean and welcoming.",
-            date: 'Aug 12, 2026'
-        },
-        {
-            name: 'Keira Knight',
-            rating: 5,
-            content: "My acrylic full set looks incredibly natural. Ndi paid such close attention to the length and custom gold foil styling. Worth every single penny!",
-            date: 'Aug 08, 2026'
-        },
-        {
-            name: 'Mila Kunis',
-            rating: 4,
-            content: "Beautiful custom line art! Ndi is highly skilled. The session ran about 10 minutes over but the quality and precision made up for it. Highly recommend.",
-            date: 'Jul 30, 2026'
+    // Watch Approved Reviews in Firestore (Real-time update)
+    const reviewsQuery = query(
+        collection(db, "reviews"), 
+        where("status", "==", "approved"), 
+        orderBy("createdAt", "desc")
+    );
+
+    onSnapshot(reviewsQuery, (snapshot) => {
+        let reviewsList = [];
+        snapshot.forEach(doc => {
+            reviewsList.push(doc.data());
+        });
+
+        // Fall back to default mock list if Firestore contains no reviews
+        if (reviewsList.length === 0) {
+            reviewsList = defaultReviews;
         }
-    ];
 
-    // Load from local storage or set defaults
-    let reviews = JSON.parse(localStorage.getItem('ndis_nail_reviews'));
-    if (!reviews || reviews.length === 0) {
-        reviews = defaultReviews;
-        localStorage.setItem('ndis_nail_reviews', JSON.stringify(reviews));
-    }
+        renderReviews(reviewsList);
+        updateMetrics(reviewsList);
+    }, (err) => {
+        console.warn("Reviews watcher failed; using defaults.", err);
+        renderReviews(defaultReviews);
+        updateMetrics(defaultReviews);
+    });
 
-    // Render feed & metrics
-    renderReviews();
-    updateMetrics();
-
-    // Form Submission
+    // Submit Review Form
     reviewForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
@@ -468,29 +577,38 @@ function initReviewsSystem() {
 
         if (!name || !content) return;
 
-        // Get format date: "Month Day, Year"
         const options = { year: 'numeric', month: 'short', day: '2-digit' };
         const todayStr = new Date().toLocaleDateString('en-US', options);
+
+        const btnSubmit = reviewForm.querySelector('.btn-submit-review');
+        const origText = btnSubmit.innerHTML;
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
 
         const newReview = {
             name: name,
             rating: currentFormRating,
             content: content,
-            date: todayStr
+            date: todayStr,
+            status: "pending", // Moderate first!
+            createdAt: Timestamp.now()
         };
 
-        // Prepend new review
-        reviews.unshift(newReview);
-        localStorage.setItem('ndis_nail_reviews', JSON.stringify(reviews));
-
-        // Re-render
-        renderReviews();
-        updateMetrics();
-
-        // Reset Form
-        reviewForm.reset();
-        resetStarSelector();
-        alert('Thank you! Your rating and review has been submitted.');
+        // Write new pending review to Firestore
+        addDoc(collection(db, "reviews"), newReview)
+            .then(() => {
+                reviewForm.reset();
+                resetStarSelector();
+                alert('Thank you! Your rating and review has been submitted. It will show live on our page once Ndi moderates and approves it!');
+            })
+            .catch(err => {
+                console.error("Review save failed:", err);
+                alert("We ran into a database error submitting your review. Please try again.");
+            })
+            .finally(() => {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origText;
+            });
     });
 
     function resetStarSelector() {
@@ -506,12 +624,11 @@ function initReviewsSystem() {
         });
     }
 
-    function renderReviews() {
+    function renderReviews(reviews) {
         feedContainer.innerHTML = '';
         reviews.forEach(review => {
-            const initial = review.name.charAt(0);
+            const initial = review.name ? review.name.charAt(0) : 'C';
             
-            // Create Star Icons
             let starsHTML = '';
             for (let i = 1; i <= 5; i++) {
                 if (i <= review.rating) {
@@ -540,22 +657,19 @@ function initReviewsSystem() {
         });
     }
 
-    function updateMetrics() {
+    function updateMetrics(reviews) {
         const avgValueText = document.getElementById('avg-rating-value');
         const avgStarsContainer = document.getElementById('avg-stars-container');
         const countText = document.getElementById('total-reviews-count');
 
-        if (!reviews.length) return;
+        if (reviews.length === 0) return;
 
-        // Calculate Average
         const totalSum = reviews.reduce((sum, r) => sum + r.rating, 0);
         const average = (totalSum / reviews.length).toFixed(1);
 
-        // Update Average text
         avgValueText.innerText = average;
         countText.innerText = `Based on ${reviews.length} review${reviews.length > 1 ? 's' : ''}`;
 
-        // Update Average Star Icons
         avgStarsContainer.innerHTML = '';
         const roundAverage = Math.round(parseFloat(average));
         for (let i = 1; i <= 5; i++) {
@@ -566,7 +680,7 @@ function initReviewsSystem() {
             }
         }
 
-        // Update breakdown bars
+        // Breakdown percent calculations
         const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
         reviews.forEach(r => {
             if (counts[r.rating] !== undefined) counts[r.rating]++;
@@ -575,7 +689,7 @@ function initReviewsSystem() {
         const breakdownRows = document.querySelectorAll('.breakdown-row');
         breakdownRows.forEach(row => {
             const starText = row.querySelector('span:first-child').innerText;
-            const starNum = parseInt(starText.charAt(0)); // Gets 5, 4, 3, etc.
+            const starNum = parseInt(starText.charAt(0)); 
             
             const count = counts[starNum] || 0;
             const percentage = reviews.length ? Math.round((count / reviews.length) * 100) : 0;
