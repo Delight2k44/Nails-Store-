@@ -15,6 +15,9 @@
 </head>
 <body class="admin-body">
 
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container"></div>
+
     <!-- LOGIN PANEL SCREEN -->
     <div class="login-screen" id="login-container">
         <div class="login-card glass-panel">
@@ -22,7 +25,7 @@
             <p>Access Ndi's Nail Bar dashboard panel</p>
             
             <div class="login-error-msg" id="login-error">
-                <i class="fa-solid fa-circle-exclamation"></i> Invalid email or password.
+                <i class="fa-solid fa-circle-exclamation"></i> <span>Invalid email or password.</span>
             </div>
             
             <form id="admin-login-form">
@@ -59,6 +62,9 @@
                 </li>
                 <li class="menu-item" data-tab="uploader">
                     <button><i class="fa-solid fa-images"></i> Add Design</button>
+                </li>
+                <li class="menu-item" data-tab="settings">
+                    <button><i class="fa-solid fa-sliders"></i> Settings</button>
                 </li>
                 <li class="menu-item logout-item" id="btn-logout">
                     <button><i class="fa-solid fa-power-off"></i> Logout</button>
@@ -118,13 +124,13 @@
                     </div>
                 </div>
 
-                <!-- Recent Activities Panel -->
+                <!-- Welcome Info Panel -->
                 <div class="glass-panel" style="padding: 35px; margin-top: 30px;">
                     <h3>Welcome to Ndi's Nail Bar Admin Control</h3>
                     <p style="font-size: 0.9rem; color: var(--color-text-muted); margin: 15px 0 25px; line-height: 1.7; font-weight: 300;">
                         Use the sidebar menu to navigate between sections. Here is what you can do:
                     </p>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                         <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
                             <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: var(--color-rose-gold-dark);"><i class="fa-solid fa-calendar-check"></i> Manage Bookings</h4>
                             <p style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 300;">Review date and time requests, confirm new sessions, or mark appointments as completed.</p>
@@ -136,6 +142,10 @@
                         <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
                             <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: var(--color-rose-gold-dark);"><i class="fa-solid fa-images"></i> Upload Nail Art</h4>
                             <p style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 300;">Add photos of your work directly to the website gallery, and tag them by style category.</p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.25); padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+                            <h4 style="font-size: 1.2rem; margin-bottom: 8px; color: var(--color-rose-gold-dark);"><i class="fa-solid fa-sliders"></i> Website Settings</h4>
+                            <p style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 300;">Change service prices, update add-ons, and swap the hero & about images on your site.</p>
                         </div>
                     </div>
                 </div>
@@ -176,7 +186,6 @@
                             </tr>
                         </thead>
                         <tbody id="bookings-table-body">
-                            <!-- Populated dynamically via JS -->
                             <tr>
                                 <td colspan="9" class="no-records-msg">Loading bookings...</td>
                             </tr>
@@ -188,7 +197,6 @@
             <!-- TAB 3: REVIEWS MODERATION -->
             <div class="tab-content" id="reviews-tab">
                 <div class="reviews-moderation-grid" id="pending-reviews-container">
-                    <!-- Populated dynamically via JS -->
                     <div class="no-records-msg">Loading pending reviews...</div>
                 </div>
             </div>
@@ -236,6 +244,74 @@
                     </form>
                 </div>
             </div>
+
+            <!-- TAB 5: WEBSITE SETTINGS (CMS) -->
+            <div class="tab-content" id="settings-tab">
+
+                <!-- Section 1: Website Images -->
+                <div class="cms-section glass-panel">
+                    <h3><i class="fa-solid fa-image"></i> Website Images</h3>
+                    <p class="cms-section-desc">Upload new photos to change the Hero background and About Us section image on your live website.</p>
+
+                    <div class="cms-image-grid">
+                        <!-- Hero Image -->
+                        <div class="cms-image-card">
+                            <h4>Hero Background</h4>
+                            <p class="cms-image-hint">This is the large background image visitors see when they first open your website.</p>
+                            <div class="cms-image-preview-box">
+                                <img id="hero-preview-img" src="assets/hero.jpg" alt="Current Hero Image">
+                            </div>
+                            <div class="cms-image-controls">
+                                <input type="file" id="hero-image-input" accept="image/*">
+                                <button class="btn btn-primary btn-cms-upload" id="btn-upload-hero">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload New Hero
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- About Image -->
+                        <div class="cms-image-card">
+                            <h4>About Us Photo</h4>
+                            <p class="cms-image-hint">This image appears in the About Us section on the homepage next to the studio description.</p>
+                            <div class="cms-image-preview-box">
+                                <img id="about-preview-img" src="assets/about.jpg" alt="Current About Image">
+                            </div>
+                            <div class="cms-image-controls">
+                                <input type="file" id="about-image-input" accept="image/*">
+                                <button class="btn btn-primary btn-cms-upload" id="btn-upload-about">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload New About
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Pricing Manager -->
+                <div class="cms-section glass-panel" style="margin-top: 30px;">
+                    <h3><i class="fa-solid fa-tags"></i> Service Pricing</h3>
+                    <p class="cms-section-desc">Edit the prices and session durations for your services. Changes go live on the website immediately after saving.</p>
+
+                    <div id="services-pricing-list" class="pricing-editor-list">
+                        <p style="color: var(--color-text-muted); font-size: 0.85rem;">Loading services...</p>
+                    </div>
+                </div>
+
+                <!-- Section 3: Addons Pricing -->
+                <div class="cms-section glass-panel" style="margin-top: 30px;">
+                    <h3><i class="fa-solid fa-puzzle-piece"></i> Add-on Pricing</h3>
+                    <p class="cms-section-desc">Edit the prices for optional booking add-ons.</p>
+
+                    <div id="addons-pricing-list" class="pricing-editor-list">
+                        <p style="color: var(--color-text-muted); font-size: 0.85rem;">Loading add-ons...</p>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <button class="btn btn-primary btn-save-all-prices" id="btn-save-prices">
+                    <i class="fa-solid fa-floppy-disk"></i> Save All Prices
+                </button>
+            </div>
+
         </main>
     </div>
 

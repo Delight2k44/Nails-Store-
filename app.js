@@ -6,6 +6,7 @@
 import { db } from "./firebase-config.js";
 import { 
     collection, 
+    doc,
     addDoc, 
     onSnapshot, 
     query, 
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPortfolioFilter();
     initBookingWizard();
     initReviewsSystem();
+    initDynamicLayout();
 });
 
 /* ==========================================
@@ -74,6 +76,167 @@ function initNavigation() {
 }
 
 /* ==========================================
+   DYNAMIC LAYOUT: HERO & ABOUT IMAGES FROM FIRESTORE
+   ========================================== */
+function initDynamicLayout() {
+    try {
+        onSnapshot(doc(db, "settings", "layout"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
+                // Update Hero background image via CSS variable
+                if (data.heroImageUrl) {
+                    document.documentElement.style.setProperty(
+                        '--hero-bg', 
+                        `url('${data.heroImageUrl}')`
+                    );
+                }
+                
+                // Update About section image
+                if (data.aboutImageUrl) {
+                    const aboutImg = document.querySelector('.about-image img');
+                    if (aboutImg) {
+                        aboutImg.src = data.aboutImageUrl;
+                    }
+                }
+            }
+        }, (err) => {
+            console.warn("Layout settings fetch error (non-critical):", err);
+        });
+    } catch (err) {
+        console.warn("Layout init skipped:", err);
+    }
+}
+
+/* ==========================================
+   DYNAMIC SERVICES & ADDONS FROM FIRESTORE
+   ========================================== */
+function loadDynamicServices(onServicesLoaded) {
+    try {
+        const servicesQuery = query(collection(db, "services"), orderBy("order", "asc"));
+        onSnapshot(servicesQuery, (snapshot) => {
+            if (snapshot.empty) {
+                // No services in DB yet — keep static HTML as fallback
+                return;
+            }
+            
+            const services = [];
+            snapshot.forEach(docSnap => {
+                services.push(docSnap.data());
+            });
+
+            // Render service cards in the pricing section
+            renderServiceCards(services);
+            // Update booking form dropdown
+            renderBookingServiceOptions(services);
+            
+            if (onServicesLoaded) onServicesLoaded(services);
+        }, (err) => {
+            console.warn("Services fetch error (using static fallback):", err);
+        });
+    } catch (err) {
+        console.warn("Services init skipped:", err);
+    }
+}
+
+function loadDynamicAddons() {
+    try {
+        onSnapshot(collection(db, "addons"), (snapshot) => {
+            if (snapshot.empty) return;
+            
+            const addons = [];
+            snapshot.forEach(docSnap => {
+                addons.push(docSnap.data());
+            });
+
+            renderBookingAddonOptions(addons);
+        }, (err) => {
+            console.warn("Addons fetch error (using static fallback):", err);
+        });
+    } catch (err) {
+        console.warn("Addons init skipped:", err);
+    }
+}
+
+function renderServiceCards(services) {
+    const servicesGrid = document.querySelector('.services-grid');
+    if (!servicesGrid) return;
+
+    servicesGrid.innerHTML = '';
+
+    services.forEach(service => {
+        const card = document.createElement('div');
+        card.className = 'service-card';
+        card.innerHTML = `
+            <div class="service-details">
+                <span class="service-category">${service.category}</span>
+                <h3 class="service-name">${service.name}</h3>
+                <p class="service-description">${service.description}</p>
+            </div>
+            <div class="service-pricing">
+                <span class="price">R${service.price}</span>
+                <span class="duration"><i class="fa-regular fa-clock"></i> ${service.duration} mins</span>
+                <button class="btn btn-service-book" data-service="${service.name}" data-price="${service.price}">Quick Book</button>
+            </div>
+        `;
+        servicesGrid.appendChild(card);
+    });
+
+    // Re-wire quick book buttons for the booking wizard
+    const quickBookBtns = servicesGrid.querySelectorAll('.btn-service-book');
+    quickBookBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const serviceSelect = document.getElementById('booking-service');
+            if (serviceSelect) {
+                serviceSelect.value = btn.getAttribute('data-service');
+                serviceSelect.dispatchEvent(new Event('change'));
+                document.getElementById('booking-section').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+}
+
+function renderBookingServiceOptions(services) {
+    const serviceSelect = document.getElementById('booking-service');
+    if (!serviceSelect) return;
+
+    // Keep the first placeholder option
+    const placeholder = serviceSelect.querySelector('option[disabled]');
+    serviceSelect.innerHTML = '';
+    if (placeholder) serviceSelect.appendChild(placeholder);
+
+    services.forEach(service => {
+        const option = document.createElement('option');
+        option.value = service.name;
+        option.setAttribute('data-price', service.price);
+        option.textContent = `${service.name} - R${service.price} (${service.duration} mins)`;
+        serviceSelect.appendChild(option);
+    });
+}
+
+function renderBookingAddonOptions(addons) {
+    const addonsGrid = document.querySelector('.addons-grid');
+    if (!addonsGrid) return;
+
+    addonsGrid.innerHTML = '';
+
+    addons.forEach(addon => {
+        const label = document.createElement('label');
+        label.className = 'addon-card';
+        label.innerHTML = `
+            <input type="checkbox" name="addons" value="${addon.name}" data-price="${addon.price}">
+            <span class="addon-name">${addon.name}</span>
+            <span class="addon-price">+R${addon.price}</span>
+        `;
+        addonsGrid.appendChild(label);
+    });
+
+    // Re-wire addon checkboxes for invoice updates
+    const event = new CustomEvent('addons-refreshed');
+    document.dispatchEvent(event);
+}
+
+/* ==========================================
    2. PORTFOLIO GALLERY FILTERS (FIRESTORE DRIVEN)
    ========================================== */
 const defaultNails = [
@@ -102,7 +265,6 @@ const defaultNails = [
 function initPortfolioFilter() {
     const filterButtons = document.querySelectorAll('.filter-btn');
 
-    // Filter Buttons Click Routing
     filterButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             filterButtons.forEach(b => b.classList.remove('active'));
@@ -111,15 +273,13 @@ function initPortfolioFilter() {
         });
     });
 
-    // Listen for Nail Designs in Firestore in real-time
     const nailsQuery = query(collection(db, "nails"), orderBy("createdAt", "desc"));
     onSnapshot(nailsQuery, (snapshot) => {
         let nails = [];
-        snapshot.forEach(doc => {
-            nails.push(doc.data());
+        snapshot.forEach(docSnap => {
+            nails.push(docSnap.data());
         });
 
-        // Fall back to default mock nails if Firestore collection is empty
         if (nails.length === 0) {
             nails = defaultNails;
         }
@@ -162,7 +322,6 @@ function renderPortfolioGrid(nails) {
         gridContainer.appendChild(item);
     });
 
-    // Re-apply filter tags
     applyActiveFilter();
 }
 
@@ -201,7 +360,6 @@ function initBookingWizard() {
     const steps = document.querySelectorAll('.booking-step');
     const indicators = document.querySelectorAll('.step-indicator');
     
-    // Step Elements
     const serviceSelect = document.getElementById('booking-service');
     const dateInput = document.getElementById('booking-date');
     const slotsGrid = document.getElementById('slots-grid');
@@ -209,15 +367,11 @@ function initBookingWizard() {
     const clientEmailInput = document.getElementById('client-email');
     const clientPhoneInput = document.getElementById('client-phone');
     
-    // Navigation Buttons
     const btnToStep2 = document.getElementById('btn-to-step2');
     const btnToStep3 = document.getElementById('btn-to-step3');
     const btnBackToStep1 = document.getElementById('btn-back-to-step1');
     const btnBackToStep2 = document.getElementById('btn-back-to-step2');
     const btnReset = document.getElementById('btn-reset-booking');
-
-    // Quick Book buttons in pricing section
-    const quickBookBtns = document.querySelectorAll('.btn-service-book');
 
     let bookingState = {
         step: 1,
@@ -233,9 +387,14 @@ function initBookingWizard() {
         totalPrice: 0
     };
 
-    // Quick Book Action
+    // Load dynamic services and addons from Firestore
+    loadDynamicServices();
+    loadDynamicAddons();
+
+    // Quick Book Action (initial static buttons - dynamic ones are wired in renderServiceCards)
+    const quickBookBtns = document.querySelectorAll('.btn-service-book');
     quickBookBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', () => {
             const service = btn.getAttribute('data-service');
             serviceSelect.value = service;
             serviceSelect.dispatchEvent(new Event('change'));
@@ -245,7 +404,7 @@ function initBookingWizard() {
         });
     });
 
-    // Handle Service Changes and Checkbox Choices
+    // Handle Service Changes
     serviceSelect.addEventListener('change', () => {
         const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
         bookingState.serviceName = selectedOption.text.split(' - ')[0];
@@ -253,21 +412,29 @@ function initBookingWizard() {
         updateInvoice();
     });
 
-    // Monitor Addon checkboxes
-    const addOnCheckboxes = document.querySelectorAll('input[name="addons"]');
-    addOnCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            bookingState.addons = [];
-            addOnCheckboxes.forEach(cb => {
-                if (cb.checked) {
-                    bookingState.addons.push({
-                        name: cb.value,
-                        price: parseFloat(cb.getAttribute('data-price'))
-                    });
-                }
+    // Monitor Addon checkboxes (initial + refreshed)
+    function wireAddonCheckboxes() {
+        const addOnCheckboxes = document.querySelectorAll('input[name="addons"]');
+        addOnCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                bookingState.addons = [];
+                document.querySelectorAll('input[name="addons"]').forEach(cb => {
+                    if (cb.checked) {
+                        bookingState.addons.push({
+                            name: cb.value,
+                            price: parseFloat(cb.getAttribute('data-price'))
+                        });
+                    }
+                });
+                updateInvoice();
             });
-            updateInvoice();
         });
+    }
+    wireAddonCheckboxes();
+
+    // Listen for dynamic addon refreshes from Firestore
+    document.addEventListener('addons-refreshed', () => {
+        wireAddonCheckboxes();
     });
 
     // Handle Date Selection and Time Slot Generation
@@ -277,20 +444,18 @@ function initBookingWizard() {
 
         slotsGrid.innerHTML = '';
         bookingState.date = dateInput.value;
-        bookingState.timeSlot = ''; // reset slot selection
+        bookingState.timeSlot = '';
 
         if (isNaN(day)) {
             slotsGrid.innerHTML = '<span class="no-date-msg">Please select a valid date first</span>';
             return;
         }
 
-        // Salon is closed Sunday (0) and Monday (1)
         if (day === 0 || day === 1) {
             slotsGrid.innerHTML = '<span class="no-date-msg closed-error"><i class="fa-solid fa-circle-exclamation"></i> The salon is closed on Sundays and Mondays. Please select Tuesday - Saturday.</span>';
             return;
         }
 
-        // Generate mock slots for Tuesday - Saturday
         const slots = ['10:00 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM', '5:30 PM'];
         
         slots.forEach((slot, index) => {
@@ -299,7 +464,6 @@ function initBookingWizard() {
             btn.className = 'time-slot-btn';
             btn.innerText = slot;
 
-            // Randomly flag a slot as already booked to make it realistic
             const isBooked = index > 1 && Math.random() < 0.35;
             if (isBooked) {
                 btn.disabled = true;
@@ -348,7 +512,7 @@ function initBookingWizard() {
         invoiceTime.innerText = bookingState.timeSlot || '--';
     }
 
-    // Step Transition Validator
+    // Step Transition
     function goToStep(targetStep) {
         if (targetStep > bookingState.step) {
             if (bookingState.step === 1 && !serviceSelect.value) {
@@ -428,21 +592,18 @@ function initBookingWizard() {
             time: bookingState.timeSlot,
             totalPrice: bookingState.totalPrice,
             notes: bookingState.notes,
-            status: "pending", // Starts as pending
+            status: "pending",
             createdAt: Timestamp.now()
         };
 
-        // Write to Firestore Database
         addDoc(collection(db, "bookings"), bookingData)
             .then(() => {
-                // Success: update receipt details
                 document.getElementById('ticket-client-name').innerText = bookingState.clientName;
                 document.getElementById('ticket-id').innerText = bookingId;
                 document.getElementById('ticket-service').innerText = bookingState.serviceName + (bookingState.addons.length ? ` (+${bookingState.addons.length} Add-ons)` : '');
                 document.getElementById('ticket-datetime').innerText = `${bookingState.date} @ ${bookingState.timeSlot}`;
                 document.getElementById('ticket-price').innerText = `R${bookingState.totalPrice.toFixed(2)}`;
 
-                // Render success screens
                 bookingForm.style.display = 'none';
                 document.querySelector('.stepper').style.display = 'none';
                 successBox.classList.add('active');
@@ -474,7 +635,7 @@ function initBookingWizard() {
             totalPrice: 0
         };
 
-        addOnCheckboxes.forEach(cb => cb.checked = false);
+        document.querySelectorAll('input[name="addons"]').forEach(cb => cb.checked = false);
         slotsGrid.innerHTML = '<span class="no-date-msg">Please select a valid date first</span>';
         updateInvoice();
         
@@ -518,7 +679,6 @@ function initReviewsSystem() {
 
     let currentFormRating = 5;
 
-    // Star Select button routing
     if (starsSelector) {
         const starButtons = starsSelector.querySelectorAll('.star-select-btn');
         starButtons.forEach(btn => {
@@ -542,7 +702,6 @@ function initReviewsSystem() {
         });
     }
 
-    // Watch Approved Reviews in Firestore (Real-time update)
     const reviewsQuery = query(
         collection(db, "reviews"), 
         where("status", "==", "approved"), 
@@ -551,11 +710,10 @@ function initReviewsSystem() {
 
     onSnapshot(reviewsQuery, (snapshot) => {
         let reviewsList = [];
-        snapshot.forEach(doc => {
-            reviewsList.push(doc.data());
+        snapshot.forEach(docSnap => {
+            reviewsList.push(docSnap.data());
         });
 
-        // Fall back to default mock list if Firestore contains no reviews
         if (reviewsList.length === 0) {
             reviewsList = defaultReviews;
         }
@@ -568,7 +726,6 @@ function initReviewsSystem() {
         updateMetrics(defaultReviews);
     });
 
-    // Submit Review Form
     reviewForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
@@ -590,11 +747,10 @@ function initReviewsSystem() {
             rating: currentFormRating,
             content: content,
             date: todayStr,
-            status: "pending", // Moderate first!
+            status: "pending",
             createdAt: Timestamp.now()
         };
 
-        // Write new pending review to Firestore
         addDoc(collection(db, "reviews"), newReview)
             .then(() => {
                 reviewForm.reset();
@@ -680,7 +836,6 @@ function initReviewsSystem() {
             }
         }
 
-        // Breakdown percent calculations
         const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
         reviews.forEach(r => {
             if (counts[r.rating] !== undefined) counts[r.rating]++;
