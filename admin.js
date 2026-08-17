@@ -290,7 +290,7 @@ function renderBookingsTable() {
 
         const dateFormatted = booking.date ? booking.date : '--';
         const timeFormatted = booking.time ? booking.time : '--';
-        const priceFormatted = booking.totalPrice ? `$${parseFloat(booking.totalPrice).toFixed(2)}` : '$0.00';
+        const priceFormatted = booking.totalPrice ? `R${parseFloat(booking.totalPrice).toFixed(2)}` : 'R0.00';
         const notesFormatted = booking.notes ? booking.notes : '--';
 
         row.innerHTML = `

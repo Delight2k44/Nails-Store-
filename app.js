@@ -329,7 +329,7 @@ function initBookingWizard() {
         const invoiceTime = document.getElementById('invoice-time');
 
         invoiceService.innerText = bookingState.serviceName || 'Service: None Selected';
-        invoiceServicePrice.innerText = `$${bookingState.servicePrice.toFixed(2)}`;
+        invoiceServicePrice.innerText = `R${bookingState.servicePrice.toFixed(2)}`;
 
         invoiceAddons.innerHTML = '';
         let addonsTotal = 0;
@@ -337,12 +337,12 @@ function initBookingWizard() {
             addonsTotal += addon.price;
             const item = document.createElement('div');
             item.className = 'invoice-addon-item';
-            item.innerHTML = `<span>+ ${addon.name}</span><span>+$${addon.price.toFixed(2)}</span>`;
+            item.innerHTML = `<span>+ ${addon.name}</span><span>+R${addon.price.toFixed(2)}</span>`;
             invoiceAddons.appendChild(item);
         });
 
         bookingState.totalPrice = bookingState.servicePrice + addonsTotal;
-        invoiceTotal.innerText = `$${bookingState.totalPrice.toFixed(2)}`;
+        invoiceTotal.innerText = `R${bookingState.totalPrice.toFixed(2)}`;
 
         invoiceDate.innerText = bookingState.date || '--';
         invoiceTime.innerText = bookingState.timeSlot || '--';
@@ -440,7 +440,7 @@ function initBookingWizard() {
                 document.getElementById('ticket-id').innerText = bookingId;
                 document.getElementById('ticket-service').innerText = bookingState.serviceName + (bookingState.addons.length ? ` (+${bookingState.addons.length} Add-ons)` : '');
                 document.getElementById('ticket-datetime').innerText = `${bookingState.date} @ ${bookingState.timeSlot}`;
-                document.getElementById('ticket-price').innerText = `$${bookingState.totalPrice.toFixed(2)}`;
+                document.getElementById('ticket-price').innerText = `R${bookingState.totalPrice.toFixed(2)}`;
 
                 // Render success screens
                 bookingForm.style.display = 'none';
