@@ -12,13 +12,19 @@ A modern, fully responsive website and admin dashboard for **Ndi's Nail Bar**, a
 - **Services Menu** — Dynamic pricing cards (Gel, Acrylic, Chrome, Nail Art) fetched live from Firestore
 - **Portfolio Gallery** — Filterable nail design showcase loaded from Firestore with smooth animations
 - **Multi-Step Booking Wizard** — 3-step form (Service → Date/Time → Details) with live invoice calculations and Firestore submission
+- **Instant WhatsApp Ticket Link** — Direct button on the booking confirmation screen to WhatsApp the studio with booking details
+- **Live Appointment Tracker** — Clients can search their Booking ID or phone number to check their live confirmation status and studio notes
 - **Ratings & Reviews** — Customer testimonials with star ratings, averages breakdown, and a submission form (moderated before publishing)
 - **Responsive Design** — Mobile-first layout with glassmorphism styling, rose gold & blush pink palette, and elegant serif/sans-serif typography
 
 ### 🔐 Admin Dashboard (`admin.html`)
 - **Firebase Authentication** — Secure email/password login with detailed error handling
 - **Dashboard Overview** — Real-time stat cards (total bookings, pending slots, average rating, gallery count)
-- **Bookings Management** — Searchable, filterable table with Confirm / Complete / Cancel action buttons
+- **Bookings Management & Client Notifications** —
+  - 📩 **Approve & Notify** — Generates personalized confirmation messages with service, date, time, price, and custom studio note
+  - 🚫 **Decline & Notify** — Allows the admin to provide an optional decline reason and generates cancellation messages
+  - 📲 **1-Click WhatsApp & Email Sending** — Direct integration to send the generated update via WhatsApp or Email with 1 click
+  - ⚡ **Quick WhatsApp Button** in the bookings table to chat with any client instantly
 - **Reviews Moderation** — Approve or reject pending client reviews before they go live
 - **Portfolio Uploader** — Upload nail art photos with progress bar directly to Firebase Storage
 - **Website Settings (CMS)** — Full content management system:

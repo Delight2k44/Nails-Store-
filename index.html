@@ -428,8 +428,28 @@
                         </div>
                     </div>
 
-                    <button type="button" class="btn btn-secondary btn-new-booking" id="btn-reset-booking">Book Another Session</button>
+                    <div class="ticket-actions" style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                        <a href="https://wa.me/27820000000" target="_blank" class="btn btn-primary" id="btn-ticket-whatsapp" style="background: linear-gradient(135deg, #25D366, #128C7E); font-size: 0.85rem; padding: 10px 18px;">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp Us Your Ticket
+                        </a>
+                        <button type="button" class="btn btn-secondary btn-new-booking" id="btn-reset-booking" style="margin: 0; font-size: 0.85rem; padding: 10px 18px;">
+                            Book Another Session
+                        </button>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Check Booking Status Card -->
+            <div class="booking-tracker-card glass-panel" style="margin-top: 30px;">
+                <div class="tracker-header">
+                    <h4><i class="fa-solid fa-magnifying-glass"></i> Track Your Appointment Status</h4>
+                    <p>Already booked? Enter your <strong>Booking ID</strong> (e.g. <code>NB-12345</code>) or <strong>Phone Number</strong> to check your live status.</p>
+                </div>
+                <form id="tracker-form" class="tracker-form">
+                    <input type="text" id="tracker-input" placeholder="e.g. NB-58291 or 082 123 4567" required>
+                    <button type="submit" class="btn btn-secondary btn-track">Check Status <i class="fa-solid fa-arrow-right"></i></button>
+                </form>
+                <div id="tracker-result" class="tracker-result" style="display: none;"></div>
             </div>
         </div>
     </section>

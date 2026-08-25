@@ -409,25 +409,34 @@ function renderBookingsTable() {
         let actionsHTML = '';
         if (booking.status === 'pending') {
             actionsHTML += `
-                <button class="btn-icon confirm" title="Confirm Booking" data-docid="${booking.docId}">
+                <button class="btn-icon confirm" title="Approve & Notify Client" data-docid="${booking.docId}">
                     <i class="fa-solid fa-check"></i>
                 </button>
+                <button class="btn-icon cancel" title="Decline & Notify Client" data-docid="${booking.docId}">
+                    <i class="fa-solid fa-ban"></i>
+                </button>
             `;
-        }
-        if (booking.status === 'confirmed') {
+        } else if (booking.status === 'confirmed') {
             actionsHTML += `
                 <button class="btn-icon complete" title="Mark Completed" data-docid="${booking.docId}">
                     <i class="fa-solid fa-circle-check"></i>
                 </button>
-            `;
-        }
-        if (booking.status !== 'cancelled' && booking.status !== 'completed') {
-            actionsHTML += `
-                <button class="btn-icon cancel" title="Cancel Booking" data-docid="${booking.docId}">
+                <button class="btn-icon cancel" title="Cancel & Notify Client" data-docid="${booking.docId}">
                     <i class="fa-solid fa-ban"></i>
                 </button>
             `;
-        } else {
+        }
+
+        // Always provide a quick WhatsApp button if client phone is present
+        if (booking.clientPhone) {
+            actionsHTML += `
+                <button class="btn-icon whatsapp" title="Send WhatsApp Message" data-docid="${booking.docId}">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </button>
+            `;
+        }
+
+        if (!actionsHTML) {
             actionsHTML = '<span style="color:var(--color-text-muted); font-size:0.8rem;">No actions</span>';
         }
 
@@ -449,23 +458,280 @@ function renderBookingsTable() {
             <td><div class="table-actions">${actionsHTML}</div></td>
         `;
 
-        // Wire Action Click Triggers - using docId (Firestore document ID)
+        // Wire Action Click Triggers
         row.querySelectorAll('.btn-icon').forEach(btn => {
             btn.addEventListener('click', () => {
                 const docId = btn.getAttribute('data-docid');
-                const actionClass = btn.classList.contains('confirm') ? 'confirmed' : 
-                                    btn.classList.contains('complete') ? 'completed' : 'cancelled';
-                
-                // Disable button immediately to prevent double-clicks
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-                
-                updateBookingStatus(docId, actionClass, btn);
+                const bookingData = allBookingsList.find(b => b.docId === docId);
+                if (!bookingData) return;
+
+                if (btn.classList.contains('confirm')) {
+                    openBookingNotifyModal(bookingData, 'confirmed');
+                } else if (btn.classList.contains('cancel')) {
+                    openBookingNotifyModal(bookingData, 'cancelled');
+                } else if (btn.classList.contains('complete')) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    updateBookingStatus(docId, 'completed', btn);
+                } else if (btn.classList.contains('whatsapp')) {
+                    openBookingNotifyModal(bookingData, bookingData.status === 'confirmed' ? 'confirmed' : 'pending');
+                }
             });
         });
 
         bookingsTableBody.appendChild(row);
     });
+}
+
+/* ==========================================
+   BOOKING NOTIFICATION MODAL CONTROLLER
+   ========================================== */
+let currentNotifyBooking = null;
+let currentNotifyAction = 'confirmed';
+
+const notifyModal = document.getElementById('booking-notify-modal');
+const notifyModalTitle = document.getElementById('modal-notify-title');
+const notifyAvatar = document.getElementById('modal-client-avatar');
+const notifyClientName = document.getElementById('modal-client-name');
+const notifyClientMeta = document.getElementById('modal-client-meta');
+const toggleConfirmBtn = document.getElementById('toggle-confirm-btn');
+const toggleCancelBtn = document.getElementById('toggle-cancel-btn');
+const customMsgInput = document.getElementById('modal-custom-message');
+const msgPreviewArea = document.getElementById('modal-msg-preview');
+const btnCopyMsg = document.getElementById('btn-copy-msg');
+const btnModalWhatsapp = document.getElementById('btn-modal-whatsapp');
+const btnModalEmail = document.getElementById('btn-modal-email');
+const btnModalConfirmStatus = document.getElementById('btn-modal-confirm-status');
+const btnCloseModal = document.getElementById('btn-close-notify-modal');
+const btnCancelModal = document.getElementById('btn-cancel-notify-modal');
+
+function formatPhoneForWhatsApp(phone) {
+    if (!phone) return '';
+    let cleaned = phone.replace(/[^0-9]/g, '');
+    // If standard 10-digit South African number starting with 0 (e.g. 0821234567), prepend country code 27
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
+        cleaned = '27' + cleaned.substring(1);
+    }
+    return cleaned;
+}
+
+function openBookingNotifyModal(booking, defaultAction = 'confirmed') {
+    currentNotifyBooking = booking;
+    currentNotifyAction = defaultAction;
+
+    // Populate client brief
+    const initial = booking.clientName ? booking.clientName.charAt(0).toUpperCase() : 'C';
+    notifyAvatar.innerText = initial;
+    notifyClientName.innerText = booking.clientName || 'Client';
+    notifyClientMeta.innerHTML = `
+        <i class="fa-solid fa-phone"></i> ${booking.clientPhone || 'No phone'} &nbsp;|&nbsp; 
+        <i class="fa-solid fa-envelope"></i> ${booking.clientEmail || 'No email'} &nbsp;|&nbsp;
+        <i class="fa-solid fa-tag"></i> <strong>${booking.service || 'Service'}</strong>
+    `;
+
+    // Toggle active buttons
+    setActionToggle(defaultAction);
+
+    // Reset custom message
+    customMsgInput.value = '';
+
+    // Generate preview
+    updateModalMessagePreview();
+
+    // Show modal
+    notifyModal.style.display = 'flex';
+}
+
+function closeBookingNotifyModal() {
+    notifyModal.style.display = 'none';
+    currentNotifyBooking = null;
+}
+
+function setActionToggle(action) {
+    currentNotifyAction = action;
+    if (action === 'confirmed') {
+        toggleConfirmBtn.classList.add('active');
+        toggleCancelBtn.classList.remove('active');
+        notifyModalTitle.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#27ae60;"></i> Approve & Notify Client';
+        btnModalConfirmStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Confirm Appointment';
+        btnModalConfirmStatus.style.background = 'linear-gradient(135deg, #2d8a4e, #27ae60)';
+    } else {
+        toggleCancelBtn.classList.add('active');
+        toggleConfirmBtn.classList.remove('active');
+        notifyModalTitle.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:#e74c3c;"></i> Decline & Notify Client';
+        btnModalConfirmStatus.innerHTML = '<i class="fa-solid fa-ban"></i> Cancel Appointment';
+        btnModalConfirmStatus.style.background = 'linear-gradient(135deg, #c0392b, #e74c3c)';
+    }
+}
+
+function generateClientMessageText(booking, action, customNote) {
+    if (!booking) return '';
+
+    const name = booking.clientName || 'Valued Client';
+    const service = booking.service || 'Nail Service';
+    const date = booking.date || 'TBD';
+    const time = booking.time || 'TBD';
+    const price = booking.totalPrice ? `R${parseFloat(booking.totalPrice).toFixed(2)}` : 'R0.00';
+    const bookingId = booking.id || booking.docId.substring(0, 8);
+
+    if (action === 'confirmed') {
+        let msg = `✨ Ndi's Nail Bar - Appointment Confirmed! ✨\n\n`;
+        msg += `Hi ${name},\n`;
+        msg += `Your appointment has been CONFIRMED! 🎉\n\n`;
+        msg += `💅 Service: ${service}\n`;
+        msg += `📅 Date: ${date}\n`;
+        msg += `⏰ Time: ${time}\n`;
+        msg += `💰 Total: ${price}\n`;
+        msg += `🔖 Booking ID: ${bookingId}\n`;
+
+        if (customNote) {
+            msg += `\n📝 Note: ${customNote}\n`;
+        }
+
+        msg += `\n📍 Studio: Ndi's Nail Bar\n`;
+        msg += `We look forward to pampering you! If you need to make changes, please reply to this message.`;
+        return msg;
+    } else {
+        let msg = `💅 Ndi's Nail Bar - Appointment Update\n\n`;
+        msg += `Hi ${name},\n`;
+        msg += `We regret to inform you that your booking request for ${service} on ${date} at ${time} could not be accepted.\n\n`;
+
+        if (customNote) {
+            msg += `📝 Reason: ${customNote}\n\n`;
+        } else {
+            msg += `📝 Reason: The requested time slot is currently unavailable.\n\n`;
+        }
+
+        msg += `🔖 Booking ID: ${bookingId}\n\n`;
+        msg += `Please visit our website to choose another available time slot, or reply directly to this message.\n\n`;
+        msg += `Warm regards,\nNdi's Nail Bar`;
+        return msg;
+    }
+}
+
+function updateModalMessagePreview() {
+    if (!currentNotifyBooking) return;
+
+    const customNote = customMsgInput.value.trim();
+    const text = generateClientMessageText(currentNotifyBooking, currentNotifyAction, customNote);
+    msgPreviewArea.value = text;
+
+    // Update WhatsApp link
+    const waPhone = formatPhoneForWhatsApp(currentNotifyBooking.clientPhone);
+    if (waPhone) {
+        btnModalWhatsapp.href = `https://wa.me/${waPhone}?text=${encodeURIComponent(text)}`;
+        btnModalWhatsapp.style.display = 'inline-flex';
+    } else {
+        btnModalWhatsapp.style.display = 'none';
+    }
+
+    // Update Email link
+    if (currentNotifyBooking.clientEmail) {
+        const subject = `Ndi's Nail Bar Appointment ${currentNotifyAction === 'confirmed' ? 'Confirmation' : 'Update'} (${currentNotifyBooking.id || ''})`;
+        btnModalEmail.href = `mailto:${currentNotifyBooking.clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+        btnModalEmail.style.display = 'inline-flex';
+    } else {
+        btnModalEmail.style.display = 'none';
+    }
+}
+
+// Modal Event Listeners
+if (toggleConfirmBtn && toggleCancelBtn) {
+    toggleConfirmBtn.addEventListener('click', () => {
+        setActionToggle('confirmed');
+        updateModalMessagePreview();
+    });
+    toggleCancelBtn.addEventListener('click', () => {
+        setActionToggle('cancelled');
+        updateModalMessagePreview();
+    });
+}
+
+if (customMsgInput) {
+    customMsgInput.addEventListener('input', updateModalMessagePreview);
+}
+
+if (btnCopyMsg) {
+    btnCopyMsg.addEventListener('click', () => {
+        if (msgPreviewArea.value) {
+            navigator.clipboard.writeText(msgPreviewArea.value)
+                .then(() => showToast('Message copied to clipboard!', 'success'))
+                .catch(() => showToast('Could not copy automatically. Please select text manually.', 'warning'));
+        }
+    });
+}
+
+if (btnCloseModal) btnCloseModal.addEventListener('click', closeBookingNotifyModal);
+if (btnCancelModal) btnCancelModal.addEventListener('click', closeBookingNotifyModal);
+
+// Close on clicking backdrop
+if (notifyModal) {
+    notifyModal.addEventListener('click', (e) => {
+        if (e.target === notifyModal) closeBookingNotifyModal();
+    });
+}
+
+// Update Firestore when modal actions are triggered
+if (btnModalConfirmStatus) {
+    btnModalConfirmStatus.addEventListener('click', () => {
+        if (!currentNotifyBooking) return;
+        const docId = currentNotifyBooking.docId;
+        const customNote = customMsgInput.value.trim();
+
+        btnModalConfirmStatus.disabled = true;
+        btnModalConfirmStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+        updateBookingWithNotification(docId, currentNotifyAction, customNote)
+            .finally(() => {
+                btnModalConfirmStatus.disabled = false;
+                closeBookingNotifyModal();
+            });
+    });
+}
+
+if (btnModalWhatsapp) {
+    btnModalWhatsapp.addEventListener('click', () => {
+        if (!currentNotifyBooking) return;
+        const docId = currentNotifyBooking.docId;
+        const customNote = customMsgInput.value.trim();
+        updateBookingWithNotification(docId, currentNotifyAction, customNote, "WhatsApp");
+        closeBookingNotifyModal();
+    });
+}
+
+if (btnModalEmail) {
+    btnModalEmail.addEventListener('click', () => {
+        if (!currentNotifyBooking) return;
+        const docId = currentNotifyBooking.docId;
+        const customNote = customMsgInput.value.trim();
+        updateBookingWithNotification(docId, currentNotifyAction, customNote, "Email");
+        closeBookingNotifyModal();
+    });
+}
+
+function updateBookingWithNotification(docId, newStatus, customNote = '', channel = '') {
+    const docRef = doc(db, "bookings", docId);
+    const updateData = {
+        status: newStatus,
+        adminNote: customNote,
+        notificationSentAt: Timestamp.now(),
+        notificationChannel: channel || 'In-App'
+    };
+
+    return updateDoc(docRef, updateData)
+        .then(() => {
+            const statusLabels = {
+                confirmed: 'approved & confirmed',
+                completed: 'marked as completed',
+                cancelled: 'declined & cancelled'
+            };
+            const channelMsg = channel ? ` (Notification prepared via ${channel})` : '';
+            showToast(`Booking ${statusLabels[newStatus] || 'updated'}${channelMsg}!`, 'success');
+        })
+        .catch(err => {
+            console.error("Error updating booking status:", err);
+            showToast(`Failed to update booking status. ${err.message || 'Please try again.'}`, 'error');
+        });
 }
 
 function updateBookingStatus(docId, newStatus, btnElement) {
@@ -482,7 +748,6 @@ function updateBookingStatus(docId, newStatus, btnElement) {
         .catch(err => {
             console.error("Error updating booking status:", err);
             showToast(`Failed to update booking. ${err.message || 'Please try again.'}`, 'error');
-            // Re-enable button on failure
             if (btnElement) {
                 btnElement.disabled = false;
                 btnElement.style.opacity = '1';

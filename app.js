@@ -8,6 +8,7 @@ import {
     collection, 
     doc,
     addDoc, 
+    getDocs,
     onSnapshot, 
     query, 
     where, 
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initBookingWizard();
     initReviewsSystem();
     initDynamicLayout();
+    initBookingTracker();
 });
 
 /* ==========================================
@@ -604,6 +606,13 @@ function initBookingWizard() {
                 document.getElementById('ticket-datetime').innerText = `${bookingState.date} @ ${bookingState.timeSlot}`;
                 document.getElementById('ticket-price').innerText = `R${bookingState.totalPrice.toFixed(2)}`;
 
+                // Configure direct WhatsApp button with client booking details
+                const btnTicketWa = document.getElementById('btn-ticket-whatsapp');
+                if (btnTicketWa) {
+                    const waText = `Hi Ndi! ✨ I just requested an appointment on your website.\n\n💅 Service: ${bookingState.serviceName}\n📅 Date: ${bookingState.date}\n⏰ Time: ${bookingState.timeSlot}\n💰 Total: R${bookingState.totalPrice.toFixed(2)}\n🔖 Booking ID: ${bookingId}\n\nClient Name: ${bookingState.clientName}`;
+                    btnTicketWa.href = `https://wa.me/27820000000?text=${encodeURIComponent(waText)}`;
+                }
+
                 bookingForm.style.display = 'none';
                 document.querySelector('.stepper').style.display = 'none';
                 successBox.classList.add('active');
@@ -854,3 +863,110 @@ function initReviewsSystem() {
         });
     }
 }
+
+/* ==========================================
+   5. REAL-TIME CLIENT APPOINTMENT TRACKER
+   ========================================== */
+function initBookingTracker() {
+    const trackerForm = document.getElementById('tracker-form');
+    const trackerInput = document.getElementById('tracker-input');
+    const trackerResult = document.getElementById('tracker-result');
+
+    if (!trackerForm || !trackerInput || !trackerResult) return;
+
+    trackerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const queryVal = trackerInput.value.trim();
+        if (!queryVal) return;
+
+        const btnSubmit = trackerForm.querySelector('button[type="submit"]');
+        const origText = btnSubmit.innerHTML;
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
+
+        trackerResult.style.display = 'block';
+        trackerResult.innerHTML = '<div style="text-align:center; padding: 15px; color: var(--color-text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Checking live appointment status...</div>';
+
+        try {
+            // First search by Booking ID (e.g. NB-12345)
+            const idQuery = query(collection(db, "bookings"), where("id", "==", queryVal));
+            let snapshot = await getDocs(idQuery);
+
+            // If not found, try searching by Phone Number
+            if (snapshot.empty) {
+                const phoneQuery = query(collection(db, "bookings"), where("clientPhone", "==", queryVal));
+                snapshot = await getDocs(phoneQuery);
+            }
+
+            if (snapshot.empty) {
+                trackerResult.innerHTML = `
+                    <div style="text-align:center; padding: 10px;">
+                        <i class="fa-solid fa-circle-question" style="font-size: 1.8rem; color: var(--color-rose-gold-dark); margin-bottom: 8px;"></i>
+                        <h4 style="color: var(--color-text-dark); margin-bottom: 4px;">No Booking Found</h4>
+                        <p style="font-size: 0.8rem; color: var(--color-text-muted);">We couldn't find an appointment matching <strong>"${queryVal}"</strong>. Please check your Booking ID or contact us on WhatsApp.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const bookings = [];
+            snapshot.forEach(docSnap => bookings.push(docSnap.data()));
+            bookings.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+            const b = bookings[0];
+            const statusLabels = {
+                pending: { text: "Pending Approval ⏳", class: "pending" },
+                confirmed: { text: "Approved & Confirmed 🎉", class: "confirmed" },
+                completed: { text: "Completed ✨", class: "completed" },
+                cancelled: { text: "Declined / Cancelled ❌", class: "cancelled" }
+            };
+            const statusInfo = statusLabels[b.status] || { text: b.status, class: "pending" };
+            const priceFormatted = b.totalPrice ? `R${parseFloat(b.totalPrice).toFixed(2)}` : 'R0.00';
+
+            let noteHTML = '';
+            if (b.adminNote) {
+                noteHTML = `
+                    <div class="tracker-note-box">
+                        <strong><i class="fa-solid fa-comment-dots"></i> Note from Studio:</strong><br>
+                        ${b.adminNote}
+                    </div>
+                `;
+            }
+
+            trackerResult.innerHTML = `
+                <div class="tracker-result-header">
+                    <div>
+                        <strong style="font-size: 1rem; color: var(--color-text-dark);">${b.clientName || 'Client'}</strong>
+                        <div style="font-size: 0.75rem; color: var(--color-text-muted); font-family: monospace;">Booking ID: ${b.id}</div>
+                    </div>
+                    <span class="tracker-status-badge ${statusInfo.class}">${statusInfo.text}</span>
+                </div>
+                <div class="tracker-item-row">
+                    <span>Service:</span>
+                    <strong>${b.service || '--'}</strong>
+                </div>
+                <div class="tracker-item-row">
+                    <span>Date & Time:</span>
+                    <strong>${b.date || '--'} @ ${b.time || '--'}</strong>
+                </div>
+                <div class="tracker-item-row">
+                    <span>Estimated Total:</span>
+                    <strong style="color: var(--color-rose-gold-dark);">${priceFormatted}</strong>
+                </div>
+                ${noteHTML}
+            `;
+        } catch (err) {
+            console.error("Tracker search error:", err);
+            trackerResult.innerHTML = `
+                <div style="text-align:center; padding: 10px; color: #e74c3c;">
+                    <i class="fa-solid fa-circle-exclamation"></i> Error checking status. Please try again.
+                </div>
+            `;
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = origText;
+        }
+    });
+}
+

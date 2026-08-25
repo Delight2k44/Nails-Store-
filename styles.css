@@ -1765,3 +1765,146 @@ textarea:focus {
         padding: 25px 15px;
     }
 }
+
+/* ==========================================
+   APPOINTMENT STATUS TRACKER STYLES
+   ========================================== */
+.booking-tracker-card {
+    max-width: 780px;
+    margin: 35px auto 0;
+    padding: 30px;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.tracker-header h4 {
+    font-size: 1.3rem;
+    color: var(--color-text-dark);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tracker-header h4 i {
+    color: var(--color-rose-gold-dark);
+}
+
+.tracker-header p {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-bottom: 20px;
+}
+
+.tracker-form {
+    display: flex;
+    max-width: 500px;
+    margin: 0 auto;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tracker-form input {
+    flex: 1;
+    min-width: 220px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 0.88rem;
+    color: var(--color-text-dark);
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.tracker-form input:focus {
+    outline: none;
+    border-color: var(--color-rose-gold-dark);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 3px rgba(200, 143, 123, 0.2);
+}
+
+.btn-track {
+    padding: 12px 22px !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+}
+
+.tracker-result {
+    max-width: 540px;
+    margin: 25px auto 0;
+    padding: 22px 25px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    text-align: left;
+    font-size: 0.88rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.tracker-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(200, 143, 123, 0.3);
+}
+
+.tracker-status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tracker-status-badge.pending {
+    background: rgba(243, 156, 18, 0.15);
+    color: #d35400;
+    border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+.tracker-status-badge.confirmed {
+    background: rgba(46, 204, 113, 0.15);
+    color: #27ae60;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.tracker-status-badge.completed {
+    background: rgba(52, 152, 219, 0.15);
+    color: #2980b9;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.tracker-status-badge.cancelled {
+    background: rgba(231, 76, 60, 0.15);
+    color: #c0392b;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.tracker-item-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 0.83rem;
+    color: var(--color-text-muted);
+}
+
+.tracker-item-row strong {
+    color: var(--color-text-dark);
+}
+
+.tracker-note-box {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(200, 143, 123, 0.1);
+    border-left: 3px solid var(--color-rose-gold-dark);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--color-text-dark);
+}
+
