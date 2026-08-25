@@ -34,46 +34,194 @@ body.admin-body {
 
 .login-card {
     width: 100%;
-    max-width: 420px;
-    padding: 45px;
+    max-width: 440px;
+    padding: 42px 36px;
     text-align: center;
+    border-radius: var(--radius-md);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.login-brand-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-rose-gold-dark), var(--color-rose-gold-light));
+    color: #fff;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 20px rgba(200, 143, 123, 0.35);
 }
 
 .login-card h2 {
-    font-size: 2.2rem;
+    font-size: 2rem;
     color: var(--color-text-dark);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .login-card p {
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     color: var(--color-text-muted);
-    margin-bottom: 30px;
+    margin-bottom: 24px;
+    font-weight: 300;
 }
 
 .login-card .form-group {
     text-align: left;
+    margin-bottom: 18px;
 }
 
-.login-card input {
+.input-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon-wrapper .input-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--color-rose-gold-dark);
+    font-size: 0.9rem;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.input-icon-wrapper input {
+    width: 100%;
+    padding: 13px 40px 13px 40px;
     background: rgba(255, 255, 255, 0.85);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--color-text-dark);
+    transition: all 0.2s ease;
+}
+
+.input-icon-wrapper input:focus {
+    outline: none;
+    border-color: var(--color-rose-gold-dark);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 143, 123, 0.2);
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 2;
+}
+
+.btn-toggle-password:hover {
+    color: var(--color-rose-gold-dark);
+}
+
+.label-with-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.label-with-action label {
+    margin: 0;
+}
+
+.btn-forgot-password {
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    color: var(--color-rose-gold-dark);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.btn-forgot-password:hover {
+    text-decoration: underline;
+}
+
+.login-options-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 6px 0 16px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.remember-me-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.remember-me-checkbox input {
+    accent-color: var(--color-rose-gold-dark);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
 }
 
 .btn-login {
     width: 100%;
-    margin-top: 15px;
-    padding: 14px;
+    margin-top: 10px;
+    padding: 13px;
+    font-size: 0.95rem !important;
 }
 
 .login-error-msg {
-    color: #c62828;
-    background-color: rgba(198, 40, 40, 0.08);
-    border: 1px solid rgba(198, 40, 40, 0.15);
-    padding: 10px;
-    border-radius: var(--radius-sm);
-    font-size: 0.8rem;
+    color: #c0392b;
+    background-color: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.25);
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.82rem;
     margin-bottom: 20px;
-    display: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    animation: fadeIn 0.25s ease;
+}
+
+.login-error-msg i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.login-card-footer {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.back-to-site-link {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.back-to-site-link:hover {
+    color: var(--color-rose-gold-dark);
+    transform: translateX(-2px);
 }
 
 /* --- Dashboard Layout --- */

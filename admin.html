@@ -21,24 +21,56 @@
     <!-- LOGIN PANEL SCREEN -->
     <div class="login-screen" id="login-container">
         <div class="login-card glass-panel">
-            <h2>Luxe Admin</h2>
-            <p>Access Ndi's Nail Bar dashboard panel</p>
+            <div class="login-brand-icon">
+                <i class="fa-solid fa-sparkles"></i>
+            </div>
+            <h2>Ndi's Admin Portal</h2>
+            <p>Enter your studio credentials to access dashboard</p>
             
-            <div class="login-error-msg" id="login-error">
-                <i class="fa-solid fa-circle-exclamation"></i> <span>Invalid email or password.</span>
+            <div class="login-error-msg" id="login-error" style="display: none;">
+                <i class="fa-solid fa-circle-exclamation"></i> <span id="login-error-text">Invalid email or password.</span>
             </div>
             
-            <form id="admin-login-form">
+            <form id="admin-login-form" autocomplete="on">
                 <div class="form-group">
                     <label for="admin-email">Admin Email</label>
-                    <input type="email" id="admin-email" placeholder="admin@ndisnailbar.com" required>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input type="email" id="admin-email" placeholder="e.g. delightchetter@gmail.com" required autocomplete="email">
+                    </div>
                 </div>
+                
                 <div class="form-group">
-                    <label for="admin-password">Password</label>
-                    <input type="password" id="admin-password" placeholder="••••••••" required>
+                    <div class="label-with-action">
+                        <label for="admin-password">Password</label>
+                        <button type="button" class="btn-forgot-password" id="btn-forgot-password">Forgot password?</button>
+                    </div>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" id="admin-password" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-password" id="btn-toggle-password" title="Show/Hide Password" aria-label="Toggle password visibility">
+                            <i class="fa-solid fa-eye" id="toggle-password-icon"></i>
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-login">Sign In <i class="fa-solid fa-right-to-bracket"></i></button>
+
+                <div class="login-options-row">
+                    <label class="remember-me-checkbox">
+                        <input type="checkbox" id="remember-me" checked>
+                        <span>Keep me signed in</span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-login" id="btn-admin-signin">
+                    Sign In to Dashboard <i class="fa-solid fa-right-to-bracket"></i>
+                </button>
             </form>
+
+            <div class="login-card-footer">
+                <a href="index.html" class="back-to-site-link">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Salon Website
+                </a>
+            </div>
         </div>
     </div>
 

@@ -7,7 +7,11 @@ import { auth, db, storage } from "./firebase-config.js";
 import { 
     signInWithEmailAndPassword, 
     signOut, 
-    onAuthStateChanged 
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    setPersistence,
+    browserLocalPersistence,
+    browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
     collection, 
@@ -90,7 +94,14 @@ const loginContainer = document.getElementById('login-container');
 const dashboardWrapper = document.getElementById('dashboard-wrapper');
 const loginForm = document.getElementById('admin-login-form');
 const loginError = document.getElementById('login-error');
+const loginErrorText = document.getElementById('login-error-text');
 const btnLogout = document.getElementById('btn-logout');
+const emailInput = document.getElementById('admin-email');
+const passwordInput = document.getElementById('admin-password');
+const btnTogglePassword = document.getElementById('btn-toggle-password');
+const togglePasswordIcon = document.getElementById('toggle-password-icon');
+const btnForgotPassword = document.getElementById('btn-forgot-password');
+const rememberMeCheckbox = document.getElementById('remember-me');
 
 // Initial Launch Auth Check
 onAuthStateChanged(auth, (user) => {
@@ -98,7 +109,7 @@ onAuthStateChanged(auth, (user) => {
         loginContainer.style.display = 'none';
         dashboardWrapper.classList.add('active');
         initDashboardData();
-        showToast('Welcome back, Ndi!', 'success');
+        showToast(`Welcome back, ${user.email.split('@')[0]}!`, 'success');
     } else {
         cleanupWatchers();
         dashboardWrapper.classList.remove('active');
@@ -106,50 +117,122 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+// Auto-hide error alert when typing in email or password
+if (emailInput) emailInput.addEventListener('input', () => { if (loginError) loginError.style.display = 'none'; });
+if (passwordInput) passwordInput.addEventListener('input', () => { if (loginError) loginError.style.display = 'none'; });
+
+// Show / Hide Password Toggle
+if (btnTogglePassword && passwordInput) {
+    btnTogglePassword.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        if (togglePasswordIcon) {
+            togglePasswordIcon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        }
+    });
+}
+
+// Forgot Password Handler
+if (btnForgotPassword) {
+    btnForgotPassword.addEventListener('click', () => {
+        const email = emailInput ? emailInput.value.trim() : '';
+        if (!email) {
+            showToast('Please enter your admin email above first, then click "Forgot password?".', 'warning');
+            if (emailInput) emailInput.focus();
+            return;
+        }
+
+        const origText = btnForgotPassword.innerText;
+        btnForgotPassword.innerText = 'Sending link...';
+
+        sendPasswordResetEmail(auth, email)
+            .then(() => {
+                showToast(`Password reset link sent to ${email}! Check your inbox.`, 'success');
+            })
+            .catch((err) => {
+                console.error("Password reset error:", err);
+                if (err.code === 'auth/user-not-found') {
+                    showToast('No user account found with that email.', 'error');
+                } else {
+                    showToast(`Failed to send reset link: ${err.message || 'Please try again.'}`, 'error');
+                }
+            })
+            .finally(() => {
+                btnForgotPassword.innerText = origText;
+            });
+    });
+}
+
 // Admin Login Handler
-loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    loginError.style.display = 'none';
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (loginError) loginError.style.display = 'none';
 
-    const email = document.getElementById('admin-email').value.trim();
-    const password = document.getElementById('admin-password').value;
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
 
-    const btnSubmit = loginForm.querySelector('button[type="submit"]');
-    const origBtnText = btnSubmit.innerHTML;
-    btnSubmit.disabled = true;
-    btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing In...';
+        const btnSubmit = document.getElementById('btn-admin-signin') || loginForm.querySelector('button[type="submit"]');
+        const origBtnText = btnSubmit.innerHTML;
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing In...';
 
-    signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
+        try {
+            // Configure persistence based on "Remember me" checkbox
+            if (rememberMeCheckbox && rememberMeCheckbox.checked) {
+                await setPersistence(auth, browserLocalPersistence);
+            } else {
+                await setPersistence(auth, browserSessionPersistence);
+            }
+
+            await signInWithEmailAndPassword(auth, email, password);
             loginForm.reset();
-        })
-        .catch((error) => {
-            console.error("Auth error:", error);
-            let errorMsg = 'Invalid email or password.';
-            if (error.code === 'auth/user-not-found') errorMsg = 'No account found with this email.';
-            else if (error.code === 'auth/wrong-password') errorMsg = 'Incorrect password. Please try again.';
-            else if (error.code === 'auth/too-many-requests') errorMsg = 'Too many failed attempts. Please wait and try again.';
-            else if (error.code === 'auth/network-request-failed') errorMsg = 'Network error. Check your internet connection.';
+            if (passwordInput) passwordInput.type = 'password';
+            if (togglePasswordIcon) togglePasswordIcon.className = 'fa-solid fa-eye';
+        } catch (error) {
+            console.error("Auth login error:", error);
+            let errorMsg = 'Invalid email or password. Please verify your credentials.';
             
-            loginError.querySelector('span') ? loginError.querySelector('span').innerText = errorMsg : loginError.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${errorMsg}`;
-            loginError.style.display = 'block';
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                errorMsg = 'Incorrect email or password. Please check your spelling and try again.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMsg = 'Please enter a valid email address format.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMsg = 'Too many failed login attempts. Please wait a minute and try again.';
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMsg = 'Network connection failed. Please check your internet connection.';
+            } else if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/configuration-not-found') {
+                errorMsg = 'Email/Password sign-in is disabled in your Firebase Console. Enable it in Authentication > Sign-in method.';
+            } else if (error.code === 'auth/user-disabled') {
+                errorMsg = 'This admin account has been disabled in Firebase Console.';
+            }
+            
+            if (loginErrorText) {
+                loginErrorText.innerText = errorMsg;
+            } else if (loginError) {
+                loginError.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${errorMsg}</span>`;
+            }
+            
+            if (loginError) loginError.style.display = 'flex';
             showToast(errorMsg, 'error');
-        })
-        .finally(() => {
+        } finally {
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = origBtnText;
-        });
-});
+        }
+    });
+}
 
 // Logout Handler
-btnLogout.addEventListener('click', () => {
-    signOut(auth)
-        .then(() => showToast('Signed out successfully.', 'info'))
-        .catch(err => {
-            console.error("SignOut error:", err);
-            showToast('Sign out failed. Please try again.', 'error');
-        });
-});
+if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+        signOut(auth)
+            .then(() => showToast('Signed out successfully.', 'info'))
+            .catch(err => {
+                console.error("SignOut error:", err);
+                showToast('Sign out failed. Please try again.', 'error');
+            });
+    });
+}
 
 /* ==========================================
    TAB NAVIGATION SYSTEM
