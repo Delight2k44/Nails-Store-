@@ -43,10 +43,17 @@
 }
 
 /* --- Reset & Base Styles --- */
-* {
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
 }
 
 html {
@@ -59,7 +66,6 @@ body {
     color: var(--color-text-dark);
     font-family: 'Montserrat', sans-serif;
     line-height: 1.6;
-    overflow-x: hidden;
     background-image: 
         radial-gradient(at 0% 0%, rgba(244, 214, 203, 0.3) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(228, 181, 162, 0.2) 0px, transparent 50%);
@@ -1617,7 +1623,25 @@ textarea:focus {
 
 @media (max-width: 900px) {
     .section-title {
-        font-size: 2.5rem;
+        font-size: 2.4rem;
+    }
+
+    .about-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .about-image-wrapper {
+        max-width: 480px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .about-image-border {
+        top: -8px;
+        left: -8px;
+        width: calc(100% + 16px);
+        height: calc(100% + 16px);
     }
     
     .services-container {
@@ -1626,6 +1650,7 @@ textarea:focus {
     
     .reviews-wrapper {
         grid-template-columns: 1fr;
+        gap: 30px;
     }
     
     .write-review-panel {
@@ -1635,7 +1660,7 @@ textarea:focus {
 
 @media (max-width: 768px) {
     .header {
-        padding: 15px 5%;
+        padding: 14px 5%;
     }
     
     .mobile-nav-toggle {
@@ -1646,27 +1671,29 @@ textarea:focus {
     .navbar {
         position: fixed;
         top: 0;
-        right: -100%;
-        width: 75%;
-        max-width: 320px;
+        right: 0;
+        transform: translateX(100%);
+        width: 80%;
+        max-width: 300px;
         height: 100vh;
+        height: 100dvh;
         background: rgba(30, 22, 19, 0.98);
         flex-direction: column;
         justify-content: center;
-        gap: 30px;
-        padding: 40px;
+        gap: 25px;
+        padding: 35px 25px;
         z-index: 1000;
-        transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         backdrop-filter: blur(20px);
-        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.25);
     }
     
     .navbar.active {
-        right: 0;
+        transform: translateX(0);
     }
     
     .navbar .nav-link {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.85);
         font-size: 1rem;
     }
     
@@ -1679,11 +1706,12 @@ textarea:focus {
         width: 100%;
         padding: 12px 28px;
         font-size: 0.85rem;
+        text-align: center;
     }
     
     .hero {
-        min-height: calc(100svh - 60px);
-        padding: 110px 6% 60px;
+        min-height: calc(100svh - 55px);
+        padding: 100px 5% 50px;
         text-align: center;
         display: flex;
         align-items: center;
@@ -1700,23 +1728,24 @@ textarea:focus {
     .hero-content {
         max-width: 100%;
         margin: 0 auto;
+        width: 100%;
     }
     
     .hero-title {
-        font-size: clamp(2.2rem, 7.5vw, 3.4rem);
+        font-size: clamp(2.1rem, 7.5vw, 3.2rem);
         line-height: 1.18;
     }
 
     .hero-desc {
-        font-size: 0.95rem;
-        margin: 0 auto 30px;
+        font-size: 0.92rem;
+        margin: 0 auto 28px;
     }
     
     .hero-actions {
         flex-direction: column;
         gap: 12px;
         width: 100%;
-        max-width: 380px;
+        max-width: 360px;
         margin: 0 auto;
     }
     
@@ -1724,19 +1753,56 @@ textarea:focus {
         width: 100%;
     }
     
+    .about {
+        padding: 80px 5%;
+    }
+
+    .about-content {
+        padding: 28px 20px;
+    }
+
+    .about-title {
+        font-size: 2.2rem;
+    }
+
     .info-banner {
         grid-template-columns: 1fr;
-        padding: 40px 5%;
-        gap: 30px;
+        padding: 35px 5%;
+        gap: 25px;
     }
     
+    .booking {
+        padding: 80px 5%;
+    }
+
     .booking-container {
-        padding: 30px 20px;
+        padding: 24px 16px;
+        width: 100%;
+    }
+
+    .stepper {
+        width: 100%;
+        margin-bottom: 25px;
+    }
+
+    .step-connector {
+        margin: -16px 6px 0;
+    }
+
+    .step-num {
+        width: 36px;
+        height: 36px;
+        font-size: 0.85rem;
+    }
+
+    .step-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.02em;
     }
     
     .schedule-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 18px;
     }
     
     .time-slots-container {
@@ -1745,6 +1811,7 @@ textarea:focus {
     
     .details-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
     
     .details-grid .form-group:last-child {
@@ -1755,9 +1822,21 @@ textarea:focus {
         grid-template-columns: 1fr;
         gap: 10px;
     }
+
+    .ticket {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .ticket-header, .ticket-body, .ticket-footer {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
     
     .footer-top {
         grid-template-columns: 1fr;
+        gap: 30px;
     }
     
     .footer-col.brand-col {
@@ -1766,9 +1845,13 @@ textarea:focus {
 }
 
 @media (max-width: 480px) {
+    .header {
+        padding: 12px 4%;
+    }
+
     .hero {
-        padding: 95px 5% 50px;
-        min-height: 90svh;
+        padding: 85px 4% 45px;
+        min-height: 88svh;
     }
 
     .hero-subtitle {
@@ -1778,30 +1861,61 @@ textarea:focus {
     }
 
     .hero-title {
-        font-size: clamp(1.95rem, 9vw, 2.6rem);
-        margin-bottom: 16px;
+        font-size: clamp(1.85rem, 8.5vw, 2.4rem);
+        margin-bottom: 15px;
     }
 
     .hero-desc {
-        font-size: 0.88rem;
-        margin-bottom: 24px;
+        font-size: 0.86rem;
+        margin-bottom: 22px;
         line-height: 1.55;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .section-tagline {
+        font-size: 0.75rem;
+    }
+
+    .about {
+        padding: 60px 4%;
+    }
+
+    .about-content {
+        padding: 20px 14px;
+    }
+
+    .about-image-border {
+        display: none;
     }
 
     .portfolio-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .booking {
+        padding: 60px 4%;
     }
     
-    .section-title {
-        font-size: 2.2rem;
+    .booking-container {
+        padding: 20px 12px;
     }
-    
-    .stepper {
-        margin-bottom: 30px;
+
+    .step-connector {
+        margin: -14px 4px 0;
     }
-    
+
+    .step-num {
+        width: 32px;
+        height: 32px;
+        font-size: 0.78rem;
+    }
+
     .step-label {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
     }
     
     .ticket {
@@ -1809,12 +1923,30 @@ textarea:focus {
     }
     
     .ticket-header, .ticket-body, .ticket-footer {
-        padding-left: 20px;
-        padding-right: 20px;
+        padding-left: 15px;
+        padding-right: 15px;
     }
     
     .ratings-dashboard {
-        padding: 25px 15px;
+        padding: 20px 12px;
+    }
+
+    .booking-tracker-card {
+        padding: 20px 14px;
+        margin-top: 24px;
+    }
+
+    .tracker-form {
+        flex-direction: column;
+    }
+
+    .tracker-form input {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .btn-track {
+        width: 100%;
     }
 }
 
