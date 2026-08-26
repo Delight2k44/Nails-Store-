@@ -1368,3 +1368,307 @@ function saveAllPrices() {
             savePricesBtn.innerHTML = origText;
         });
 }
+
+/* ==========================================
+   QR CODE CLIENT SLIP SCANNER & AUTO-COMPLETE
+   ========================================== */
+let html5QrScannerInstance = null;
+
+const btnOpenQRScanner = document.getElementById('btn-open-qr-scanner');
+const qrScanModal = document.getElementById('qr-scan-modal');
+const btnCloseQRModal = document.getElementById('btn-close-qr-modal');
+const btnCancelQRModal = document.getElementById('btn-cancel-qr-modal');
+const manualBookingInput = document.getElementById('manual-booking-id-input');
+const btnManualComplete = document.getElementById('btn-manual-complete-booking');
+const qrFeedback = document.getElementById('qr-scan-feedback');
+
+function initAdminQRScanner() {
+    if (btnOpenQRScanner) {
+        btnOpenQRScanner.addEventListener('click', openQRScannerModal);
+    }
+    if (btnCloseQRModal) {
+        btnCloseQRModal.addEventListener('click', closeQRScannerModal);
+    }
+    if (btnCancelQRModal) {
+        btnCancelQRModal.addEventListener('click', closeQRScannerModal);
+    }
+
+    if (qrScanModal) {
+        qrScanModal.addEventListener('click', (e) => {
+            if (e.target === qrScanModal) closeQRScannerModal();
+        });
+    }
+
+    if (btnManualComplete) {
+        btnManualComplete.addEventListener('click', handleManualBookingComplete);
+    }
+
+    if (manualBookingInput) {
+        manualBookingInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleManualBookingComplete();
+            }
+        });
+    }
+
+    // Check for direct URL scan completion (e.g. ?completeBooking=NB-12345)
+    checkUrlScanCompletion();
+}
+
+function openQRScannerModal() {
+    if (!qrScanModal) return;
+    qrScanModal.style.display = 'flex';
+    if (qrFeedback) {
+        qrFeedback.style.display = 'none';
+        qrFeedback.className = 'qr-feedback-box';
+        qrFeedback.innerHTML = '';
+    }
+    if (manualBookingInput) manualBookingInput.value = '';
+
+    // Initialize Camera Scanner
+    startCameraScanner();
+}
+
+function closeQRScannerModal() {
+    if (!qrScanModal) return;
+    qrScanModal.style.display = 'none';
+    stopCameraScanner();
+}
+
+function startCameraScanner() {
+    const qrReaderDiv = document.getElementById('qr-reader');
+    if (!qrReaderDiv) return;
+
+    if (typeof Html5Qrcode === 'undefined') {
+        if (qrFeedback) {
+            qrFeedback.className = 'qr-feedback-box error';
+            qrFeedback.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Scanner library loading. You can enter the Booking ID manually below.';
+            qrFeedback.style.display = 'block';
+        }
+        return;
+    }
+
+    try {
+        stopCameraScanner();
+        html5QrScannerInstance = new Html5Qrcode("qr-reader");
+
+        const config = {
+            fps: 10,
+            qrbox: { width: 220, height: 220 },
+            aspectRatio: 1.0
+        };
+
+        html5QrScannerInstance.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText) => {
+                // Successful QR code scan
+                handleScannedQRCode(decodedText);
+            },
+            (errorMessage) => {
+                // Parse errors are expected while searching frames
+            }
+        ).catch(err => {
+            console.warn("Camera start failed, falling back to manual input:", err);
+            if (qrFeedback) {
+                qrFeedback.className = 'qr-feedback-box';
+                qrFeedback.style.background = 'rgba(241, 196, 15, 0.15)';
+                qrFeedback.style.color = '#d35400';
+                qrFeedback.style.border = '1px solid rgba(241, 196, 15, 0.3)';
+                qrFeedback.innerHTML = '<i class="fa-solid fa-camera-rotate"></i> Camera permission needed or unavailable. Please enter the Booking ID manually below.';
+                qrFeedback.style.display = 'block';
+            }
+        });
+    } catch (err) {
+        console.error("QR scanner start exception:", err);
+    }
+}
+
+function stopCameraScanner() {
+    if (html5QrScannerInstance) {
+        try {
+            html5QrScannerInstance.stop().then(() => {
+                html5QrScannerInstance.clear();
+                html5QrScannerInstance = null;
+            }).catch(() => {
+                html5QrScannerInstance = null;
+            });
+        } catch (e) {
+            html5QrScannerInstance = null;
+        }
+    }
+}
+
+function parseBookingIdFromQR(rawText) {
+    if (!rawText) return '';
+    let text = rawText.trim();
+
+    // Check if QR text is a URL with completeBooking query param
+    if (text.includes('completeBooking=')) {
+        try {
+            const url = new URL(text, window.location.origin);
+            const id = url.searchParams.get('completeBooking');
+            if (id) return id.trim().toUpperCase();
+        } catch (e) {
+            const match = text.match(/completeBooking=([^&]+)/);
+            if (match && match[1]) return decodeURIComponent(match[1]).trim().toUpperCase();
+        }
+    }
+
+    // Check if JSON payload
+    if (text.startsWith('{') && text.endsWith('}')) {
+        try {
+            const data = JSON.parse(text);
+            if (data.id) return data.id.trim().toUpperCase();
+            if (data.bookingId) return data.bookingId.trim().toUpperCase();
+        } catch (e) {}
+    }
+
+    // Return plain text ID (e.g. NB-12345)
+    return text.toUpperCase();
+}
+
+function handleScannedQRCode(decodedText) {
+    const bookingId = parseBookingIdFromQR(decodedText);
+    if (!bookingId) return;
+
+    // Pause camera to prevent repeated scans
+    stopCameraScanner();
+
+    completeBookingById(bookingId, "QR Camera Scan");
+}
+
+function handleManualBookingComplete() {
+    const rawVal = manualBookingInput ? manualBookingInput.value.trim() : '';
+    if (!rawVal) {
+        showToast('Please enter a Booking ID (e.g. NB-12345).', 'warning');
+        return;
+    }
+    const bookingId = parseBookingIdFromQR(rawVal);
+    completeBookingById(bookingId, "Manual ID Entry");
+}
+
+async function completeBookingById(bookingId, source = "QR Scan") {
+    if (!bookingId) return;
+
+    if (qrFeedback) {
+        qrFeedback.className = 'qr-feedback-box';
+        qrFeedback.style.display = 'block';
+        qrFeedback.style.background = 'rgba(52, 152, 219, 0.15)';
+        qrFeedback.style.color = '#2980b9';
+        qrFeedback.style.border = '1px solid rgba(52, 152, 219, 0.3)';
+        qrFeedback.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Looking up booking <strong>${bookingId}</strong>...`;
+    }
+
+    // 1. Search in local active list first
+    let targetBooking = allBookingsList.find(b => 
+        (b.id && b.id.toUpperCase() === bookingId.toUpperCase()) || 
+        (b.docId && b.docId === bookingId)
+    );
+
+    let docId = targetBooking ? targetBooking.docId : null;
+
+    // 2. If not found in memory, query Firestore
+    if (!docId) {
+        try {
+            const q = query(collection(db, "bookings"), where("id", "==", bookingId));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const docSnap = snap.docs[0];
+                docId = docSnap.id;
+                targetBooking = { docId: docId, ...docSnap.data() };
+            }
+        } catch (err) {
+            console.error("Firestore lookup error:", err);
+        }
+    }
+
+    if (!docId || !targetBooking) {
+        if (qrFeedback) {
+            qrFeedback.className = 'qr-feedback-box error';
+            qrFeedback.style.display = 'block';
+            qrFeedback.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> No booking found matching ID: <strong>${bookingId}</strong>. Please verify the slip.`;
+        }
+        showToast(`No booking found matching ${bookingId}`, 'error');
+        return;
+    }
+
+    // 3. If already completed
+    if (targetBooking.status === 'completed') {
+        if (qrFeedback) {
+            qrFeedback.className = 'qr-feedback-box';
+            qrFeedback.style.display = 'block';
+            qrFeedback.style.background = 'rgba(39, 174, 96, 0.15)';
+            qrFeedback.style.color = '#27ae60';
+            qrFeedback.style.border = '1px solid rgba(39, 174, 96, 0.3)';
+            qrFeedback.innerHTML = `<i class="fa-solid fa-circle-check"></i> Booking <strong>${targetBooking.id || docId}</strong> for <strong>${targetBooking.clientName || 'Client'}</strong> is already completed.`;
+        }
+        showToast(`Booking ${targetBooking.id || docId} was already marked completed!`, 'info');
+        setTimeout(() => closeQRScannerModal(), 2000);
+        return;
+    }
+
+    // 4. Update status to 'completed' in Firestore
+    try {
+        const docRef = doc(db, "bookings", docId);
+        await updateDoc(docRef, {
+            status: "completed",
+            completedAt: Timestamp.now(),
+            completedVia: source
+        });
+
+        const clientName = targetBooking.clientName || 'Client';
+        const displayId = targetBooking.id || docId.substring(0, 8);
+
+        if (qrFeedback) {
+            qrFeedback.className = 'qr-feedback-box success';
+            qrFeedback.style.display = 'block';
+            qrFeedback.innerHTML = `
+                <i class="fa-solid fa-circle-check" style="font-size: 1.4rem; display: block; margin-bottom: 6px;"></i>
+                <strong>Service Completed!</strong><br>
+                <span>${clientName} (${displayId})</span> has been completed and automatically removed from the active bookings list.
+            `;
+        }
+
+        showToast(`🎉 Service completed for ${clientName} (${displayId})! Removed from active list.`, 'success');
+
+        // Automatically close modal after 1.8 seconds
+        setTimeout(() => {
+            closeQRScannerModal();
+        }, 1800);
+
+    } catch (err) {
+        console.error("Error updating booking status via QR:", err);
+        if (qrFeedback) {
+            qrFeedback.className = 'qr-feedback-box error';
+            qrFeedback.style.display = 'block';
+            qrFeedback.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Failed to update booking: ${err.message || 'Please try again.'}`;
+        }
+        showToast(`Failed to complete booking: ${err.message || 'Error'}`, 'error');
+    }
+}
+
+function checkUrlScanCompletion() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('completeBooking')) {
+            const bookingId = urlParams.get('completeBooking');
+            if (bookingId) {
+                // Clear URL query parameter to avoid repeated completion triggers on refresh
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                // Small delay to allow initial Firestore auth & connection
+                setTimeout(() => {
+                    completeBookingById(bookingId, "Direct QR Link");
+                }, 1000);
+            }
+        }
+    } catch (e) {
+        console.warn("URL scan check exception:", e);
+    }
+}
+
+// Wire QR Scanner during initialization
+initAdminQRScanner();
+

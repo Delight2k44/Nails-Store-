@@ -200,6 +200,10 @@
                             <option value="cancelled">Cancelled Sessions</option>
                         </select>
                     </div>
+
+                    <button type="button" class="btn btn-scan-qr" id="btn-open-qr-scanner" title="Scan client QR code to complete service">
+                        <i class="fa-solid fa-qrcode"></i> Scan Client Slip (QR)
+                    </button>
                 </div>
 
                 <div class="table-responsive">
@@ -427,6 +431,46 @@
             </div>
         </div>
     </div>
+
+    <!-- QR CODE SCANNER MODAL FOR COMPLETING BOOKINGS -->
+    <div class="modal-backdrop" id="qr-scan-modal" style="display: none;">
+        <div class="modal-card glass-panel qr-modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h3><i class="fa-solid fa-qrcode" style="color: var(--color-rose-gold-dark);"></i> Scan Client Booking Slip</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Scan client QR code when service is finished to automatically mark it completed.</p>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-qr-modal" title="Close scanner">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Interactive QR Camera Scanner Box -->
+                <div id="qr-reader-container" class="qr-scanner-box">
+                    <div id="qr-reader" style="width: 100%;"></div>
+                </div>
+
+                <div class="qr-manual-fallback">
+                    <span class="divider-text">OR ENTER BOOKING ID MANUALLY</span>
+                    <div class="manual-input-group">
+                        <input type="text" id="manual-booking-id-input" placeholder="e.g. NB-12345" autocomplete="off">
+                        <button type="button" class="btn btn-primary" id="btn-manual-complete-booking">
+                            <i class="fa-solid fa-check"></i> Complete Service
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Scan Result Feedback Box -->
+                <div id="qr-scan-feedback" class="qr-feedback-box" style="display: none;"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-qr-modal">Close Scanner</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HTML5 QR Code Scanner Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
     <!-- Firebase SDK Imports & Controller JS -->
     <script type="module" src="admin.js"></script>

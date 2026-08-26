@@ -390,7 +390,7 @@
                     <p class="success-lead">We have reserved your temporary slot. A confirmation ticket has been generated below.</p>
                     
                     <!-- Ticket Receipt Graphic -->
-                    <div class="ticket glass-panel">
+                    <div class="ticket glass-panel" id="booking-ticket">
                         <div class="ticket-header">
                             <h4>NDI'S NAIL BAR</h4>
                             <span class="ticket-status">CONFIRMED</span>
@@ -423,12 +423,20 @@
                             <div class="ticket-notch right"></div>
                         </div>
                         <div class="ticket-footer">
-                            <p>Thank you for choosing Ndi's Nail Bar. Please arrive 10 minutes prior to your session.</p>
-                            <div class="barcode"><i class="fa-solid fa-barcode"></i></div>
+                            <p>Please present this slip upon arrival. The admin will scan your QR code after service completion.</p>
+                            
+                            <!-- Dynamic QR Code Container -->
+                            <div class="ticket-qr-container">
+                                <div class="qr-box" id="ticket-qrcode"></div>
+                                <span class="qr-caption"><i class="fa-solid fa-qrcode"></i> Admin Scan & Complete</span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="ticket-actions" style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-download-ticket" id="btn-download-ticket">
+                            <i class="fa-solid fa-download"></i> Download Slip
+                        </button>
                         <a href="https://wa.me/27820000000" target="_blank" class="btn btn-primary" id="btn-ticket-whatsapp" style="background: linear-gradient(135deg, #25D366, #128C7E); font-size: 0.85rem; padding: 10px 18px;">
                             <i class="fa-brands fa-whatsapp"></i> WhatsApp Us Your Ticket
                         </a>
@@ -600,6 +608,10 @@
             <p>&copy; 2026 Ndi's Nail Bar. All Rights Reserved. Crafted with care for premium clients. | <a href="admin.html" style="text-decoration: underline; opacity: 0.6; transition: opacity 0.3s;">Admin Login</a></p>
         </div>
     </footer>
+
+    <!-- Libraries for QR Code & Slip Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <!-- Custom JS -->
     <script type="module" src="app.js"></script>

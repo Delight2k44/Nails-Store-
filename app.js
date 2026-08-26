@@ -606,12 +606,18 @@ function initBookingWizard() {
                 document.getElementById('ticket-datetime').innerText = `${bookingState.date} @ ${bookingState.timeSlot}`;
                 document.getElementById('ticket-price').innerText = `R${bookingState.totalPrice.toFixed(2)}`;
 
+                // Generate QR Code for admin scanning on service completion
+                renderBookingQRCode(bookingId);
+
                 // Configure direct WhatsApp button with client booking details
                 const btnTicketWa = document.getElementById('btn-ticket-whatsapp');
                 if (btnTicketWa) {
                     const waText = `Hi Ndi! ✨ I just requested an appointment on your website.\n\n💅 Service: ${bookingState.serviceName}\n📅 Date: ${bookingState.date}\n⏰ Time: ${bookingState.timeSlot}\n💰 Total: R${bookingState.totalPrice.toFixed(2)}\n🔖 Booking ID: ${bookingId}\n\nClient Name: ${bookingState.clientName}`;
                     btnTicketWa.href = `https://wa.me/27820000000?text=${encodeURIComponent(waText)}`;
                 }
+
+                // Initialize Slip Download button
+                initTicketDownloader(bookingId);
 
                 bookingForm.style.display = 'none';
                 document.querySelector('.stepper').style.display = 'none';
@@ -626,6 +632,84 @@ function initBookingWizard() {
                 btnSubmit.innerHTML = origText;
             });
     });
+
+    // Helper: Render high quality QR code for booking
+    function renderBookingQRCode(bookingId) {
+        const qrContainer = document.getElementById('ticket-qrcode');
+        if (!qrContainer) return;
+        qrContainer.innerHTML = '';
+
+        const origin = window.location.origin;
+        const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+        const scanUrl = `${origin}${basePath}admin.html?completeBooking=${encodeURIComponent(bookingId)}`;
+
+        if (typeof QRCode !== 'undefined') {
+            try {
+                new QRCode(qrContainer, {
+                    text: scanUrl,
+                    width: 120,
+                    height: 120,
+                    colorDark: "#1a120f",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                return;
+            } catch (e) {
+                console.warn("QRCode JS error, using fallback API:", e);
+            }
+        }
+
+        // Image fallback API
+        const img = document.createElement('img');
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(scanUrl)}`;
+        img.alt = `Booking QR Code ${bookingId}`;
+        img.width = 120;
+        img.height = 120;
+        qrContainer.appendChild(img);
+    }
+
+    // Helper: Download Ticket Slip as Image / PDF Print
+    function initTicketDownloader(bookingId) {
+        const btnDownload = document.getElementById('btn-download-ticket');
+        if (!btnDownload) return;
+
+        btnDownload.onclick = async () => {
+            const ticketElement = document.getElementById('booking-ticket');
+            if (!ticketElement) return;
+
+            const originalHTML = btnDownload.innerHTML;
+            btnDownload.disabled = true;
+            btnDownload.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Slip...';
+
+            try {
+                if (typeof html2canvas !== 'undefined') {
+                    const canvas = await html2canvas(ticketElement, {
+                        scale: 2,
+                        backgroundColor: '#fbf9f6',
+                        useCORS: true,
+                        logging: false
+                    });
+                    const link = document.createElement('a');
+                    link.download = `NdisNailBar-Slip-${bookingId || 'Booking'}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    window.print();
+                }
+            } catch (err) {
+                console.error("Error generating slip image:", err);
+                window.print();
+            } finally {
+                btnDownload.disabled = false;
+                btnDownload.innerHTML = '<i class="fa-solid fa-circle-check"></i> Slip Downloaded!';
+                setTimeout(() => {
+                    btnDownload.innerHTML = originalHTML;
+                }, 3000);
+            }
+        };
+    }
 
     // Reset Booking Wizard
     btnReset.addEventListener('click', () => {
