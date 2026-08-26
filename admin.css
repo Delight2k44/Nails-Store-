@@ -580,6 +580,14 @@ body.admin-body {
     background-color: rgba(244, 67, 54, 0.08);
 }
 
+.btn-icon.delete:hover {
+    color: #e74c3c;
+    border-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.15);
+    transform: scale(1.15);
+    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+}
+
 .no-records-msg {
     text-align: center;
     padding: 50px 0;
@@ -1026,6 +1034,28 @@ body.admin-body {
     font-size: 0.78rem;
     color: var(--color-text-muted);
     font-weight: 400;
+}
+
+.btn-row-save {
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    background: rgba(39, 174, 96, 0.15);
+    color: #219653;
+    border: 1px solid rgba(39, 174, 96, 0.3);
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-row-save:hover {
+    background: #27ae60;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
 }
 
 .btn-save-all-prices {

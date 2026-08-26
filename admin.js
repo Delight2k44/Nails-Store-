@@ -362,12 +362,14 @@ function initDashboardData() {
 
     // 5. Real-time Services Watcher (CMS)
     try {
-        const servicesQuery = query(collection(db, "services"), orderBy("order", "asc"));
+        const servicesQuery = collection(db, "services");
         unsubServices = onSnapshot(servicesQuery, (snapshot) => {
             servicesList = [];
             snapshot.forEach(docSnap => {
                 servicesList.push({ docId: docSnap.id, ...docSnap.data() });
             });
+            // Sort locally by order or name
+            servicesList.sort((a, b) => (a.order || 99) - (b.order || 99));
             renderServicesPricingEditor();
         }, (err) => {
             console.error("Services stream error:", err);
@@ -501,6 +503,9 @@ function renderBookingsTable() {
                 <button class="btn-icon whatsapp" title="Send WhatsApp Message" data-docid="${booking.docId}">
                     <i class="fa-brands fa-whatsapp"></i>
                 </button>
+                <button class="btn-icon delete" title="Delete Booking" data-docid="${booking.docId}">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             `;
         } else if (booking.status === 'confirmed') {
             actionsHTML += `
@@ -513,6 +518,9 @@ function renderBookingsTable() {
                 <button class="btn-icon whatsapp" title="Send WhatsApp Message" data-docid="${booking.docId}">
                     <i class="fa-brands fa-whatsapp"></i>
                 </button>
+                <button class="btn-icon delete" title="Delete Booking" data-docid="${booking.docId}">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             `;
         } else if (booking.status === 'cancelled') {
             actionsHTML += `
@@ -522,11 +530,17 @@ function renderBookingsTable() {
                 <button class="btn-icon whatsapp" title="Send WhatsApp Message" data-docid="${booking.docId}">
                     <i class="fa-brands fa-whatsapp"></i>
                 </button>
+                <button class="btn-icon delete" title="Delete Booking" data-docid="${booking.docId}">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             `;
         } else {
             actionsHTML += `
                 <button class="btn-icon whatsapp" title="Send WhatsApp Message" data-docid="${booking.docId}">
                     <i class="fa-brands fa-whatsapp"></i>
+                </button>
+                <button class="btn-icon delete" title="Delete Booking" data-docid="${booking.docId}">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             `;
         }
@@ -568,6 +582,12 @@ function renderBookingsTable() {
                     // Open modal pre-set with current booking status or confirmed
                     const targetAction = bookingData.status === 'cancelled' ? 'cancelled' : 'confirmed';
                     openBookingNotifyModal(bookingData, targetAction);
+                } else if (btn.classList.contains('delete')) {
+                    const clientName = bookingData.clientName || 'this client';
+                    const displayId = bookingData.id || docId.substring(0, 8);
+                    if (confirm(`Are you sure you want to permanently delete booking ${displayId} for ${clientName}? This cannot be undone.`)) {
+                        deleteBooking(docId, btn);
+                    }
                 }
             });
         });
@@ -900,6 +920,26 @@ function updateBookingWithNotification(docId, newStatus, customNote = '', channe
         .catch(err => {
             console.error("Error updating booking status:", err);
             showToast(`Failed to update booking status. ${err.message || 'Please try again.'}`, 'error');
+        });
+}
+
+function deleteBooking(docId, btnElement) {
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    }
+    const docRef = doc(db, "bookings", docId);
+    deleteDoc(docRef)
+        .then(() => {
+            showToast('Booking deleted permanently.', 'info');
+        })
+        .catch(err => {
+            console.error("Delete booking error:", err);
+            showToast(`Failed to delete booking. ${err.message || 'Please try again.'}`, 'error');
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+            }
         });
 }
 
@@ -1263,7 +1303,7 @@ function renderServicesPricingEditor() {
     container.innerHTML = '';
 
     if (servicesList.length === 0) {
-        container.innerHTML = '<p style="color: var(--color-text-muted); font-size: 0.85rem;">No services found. They will be auto-seeded on first load.</p>';
+        container.innerHTML = '<p style="color: var(--color-text-muted); font-size: 0.85rem;">No services found. Loading or auto-seeding default services...</p>';
         return;
     }
 
@@ -1272,19 +1312,69 @@ function renderServicesPricingEditor() {
         row.className = 'pricing-edit-row';
         row.innerHTML = `
             <div class="pricing-edit-info">
-                <span class="pricing-edit-category">${service.category}</span>
+                <span class="pricing-edit-category">${service.category || 'SERVICE'}</span>
                 <span class="pricing-edit-name">${service.name}</span>
             </div>
             <div class="pricing-edit-controls">
                 <label>Price (R)</label>
                 <input type="number" class="pricing-input service-price-input" data-docid="${service.docId}" value="${service.price}" min="0" step="1">
                 <label>Duration</label>
-                <input type="number" class="pricing-input service-duration-input" data-docid="${service.docId}" value="${service.duration}" min="5" step="5">
+                <input type="number" class="pricing-input service-duration-input" data-docid="${service.docId}" value="${service.duration || 45}" min="5" step="5">
                 <span class="duration-suffix">mins</span>
+                <button type="button" class="btn-row-save btn-save-single-service" data-docid="${service.docId}">
+                    <i class="fa-solid fa-floppy-disk"></i> Save
+                </button>
             </div>
         `;
+
+        // Wire single save
+        const btnSaveSingle = row.querySelector('.btn-save-single-service');
+        if (btnSaveSingle) {
+            btnSaveSingle.addEventListener('click', () => {
+                saveSingleServicePrice(service.docId, btnSaveSingle);
+            });
+        }
+
         container.appendChild(row);
     });
+}
+
+function saveSingleServicePrice(docId, btnElement) {
+    const priceInput = document.querySelector(`.service-price-input[data-docid="${docId}"]`);
+    const durationInput = document.querySelector(`.service-duration-input[data-docid="${docId}"]`);
+
+    if (!priceInput) return;
+
+    const newPrice = parseFloat(priceInput.value);
+    const newDuration = durationInput ? parseInt(durationInput.value) : 45;
+
+    if (isNaN(newPrice) || newPrice < 0) {
+        showToast('Please enter a valid price amount.', 'warning');
+        return;
+    }
+
+    const origHTML = btnElement.innerHTML;
+    btnElement.disabled = true;
+    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    updateDoc(doc(db, "services", docId), {
+        price: newPrice,
+        duration: isNaN(newDuration) ? 45 : newDuration
+    })
+        .then(() => {
+            showToast('Service price updated successfully!', 'success');
+            btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
+            setTimeout(() => {
+                btnElement.disabled = false;
+                btnElement.innerHTML = origHTML;
+            }, 1800);
+        })
+        .catch(err => {
+            console.error("Save service price error:", err);
+            showToast(`Failed to save price: ${err.message || 'Error'}`, 'error');
+            btnElement.disabled = false;
+            btnElement.innerHTML = origHTML;
+        });
 }
 
 /* --- Addons Pricing Editor --- */
@@ -1295,7 +1385,7 @@ function renderAddonsPricingEditor() {
     container.innerHTML = '';
 
     if (addonsList.length === 0) {
-        container.innerHTML = '<p style="color: var(--color-text-muted); font-size: 0.85rem;">No add-ons found. They will be auto-seeded on first load.</p>';
+        container.innerHTML = '<p style="color: var(--color-text-muted); font-size: 0.85rem;">No add-ons found. Loading or auto-seeding default add-ons...</p>';
         return;
     }
 
@@ -1309,18 +1399,63 @@ function renderAddonsPricingEditor() {
             <div class="pricing-edit-controls">
                 <label>Price (R)</label>
                 <input type="number" class="pricing-input addon-price-input" data-docid="${addon.docId}" value="${addon.price}" min="0" step="1">
+                <button type="button" class="btn-row-save btn-save-single-addon" data-docid="${addon.docId}">
+                    <i class="fa-solid fa-floppy-disk"></i> Save
+                </button>
             </div>
         `;
+
+        // Wire single save
+        const btnSaveSingle = row.querySelector('.btn-save-single-addon');
+        if (btnSaveSingle) {
+            btnSaveSingle.addEventListener('click', () => {
+                saveSingleAddonPrice(addon.docId, btnSaveSingle);
+            });
+        }
+
         container.appendChild(row);
     });
+}
+
+function saveSingleAddonPrice(docId, btnElement) {
+    const priceInput = document.querySelector(`.addon-price-input[data-docid="${docId}"]`);
+    if (!priceInput) return;
+
+    const newPrice = parseFloat(priceInput.value);
+    if (isNaN(newPrice) || newPrice < 0) {
+        showToast('Please enter a valid price amount.', 'warning');
+        return;
+    }
+
+    const origHTML = btnElement.innerHTML;
+    btnElement.disabled = true;
+    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    updateDoc(doc(db, "addons", docId), { price: newPrice })
+        .then(() => {
+            showToast('Add-on price updated successfully!', 'success');
+            btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
+            setTimeout(() => {
+                btnElement.disabled = false;
+                btnElement.innerHTML = origHTML;
+            }, 1800);
+        })
+        .catch(err => {
+            console.error("Save addon price error:", err);
+            showToast(`Failed to save price: ${err.message || 'Error'}`, 'error');
+            btnElement.disabled = false;
+            btnElement.innerHTML = origHTML;
+        });
 }
 
 /* --- Save All Prices --- */
 function saveAllPrices() {
     const savePricesBtn = document.getElementById('btn-save-prices');
-    const origText = savePricesBtn.innerHTML;
-    savePricesBtn.disabled = true;
-    savePricesBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    const origText = savePricesBtn ? savePricesBtn.innerHTML : 'Save All Prices';
+    if (savePricesBtn) {
+        savePricesBtn.disabled = true;
+        savePricesBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving All Prices...';
+    }
 
     const promises = [];
 
@@ -1334,7 +1469,7 @@ function saveAllPrices() {
         const newDuration = durationInput ? parseInt(durationInput.value) : null;
 
         const updateData = { price: newPrice };
-        if (newDuration !== null) updateData.duration = newDuration;
+        if (newDuration !== null && !isNaN(newDuration)) updateData.duration = newDuration;
 
         if (!isNaN(newPrice) && newPrice >= 0) {
             promises.push(
@@ -1357,15 +1492,17 @@ function saveAllPrices() {
 
     Promise.all(promises)
         .then(() => {
-            showToast(`All prices saved! (${promises.length} items updated)`, 'success');
+            showToast(`All prices saved successfully! (${promises.length} items updated)`, 'success');
         })
         .catch(err => {
             console.error("Price save error:", err);
             showToast(`Failed to save some prices. ${err.message || 'Try again.'}`, 'error');
         })
         .finally(() => {
-            savePricesBtn.disabled = false;
-            savePricesBtn.innerHTML = origText;
+            if (savePricesBtn) {
+                savePricesBtn.disabled = false;
+                savePricesBtn.innerHTML = origText;
+            }
         });
 }
 

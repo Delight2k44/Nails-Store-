@@ -606,6 +606,12 @@ function initBookingWizard() {
                 document.getElementById('ticket-datetime').innerText = `${bookingState.date} @ ${bookingState.timeSlot}`;
                 document.getElementById('ticket-price').innerText = `R${bookingState.totalPrice.toFixed(2)}`;
 
+                // Make ticket box visible first so QR & canvas can render
+                bookingForm.style.display = 'none';
+                const stepper = document.querySelector('.stepper');
+                if (stepper) stepper.style.display = 'none';
+                successBox.classList.add('active');
+
                 // Generate QR Code for admin scanning on service completion
                 renderBookingQRCode(bookingId);
 
@@ -613,15 +619,11 @@ function initBookingWizard() {
                 const btnTicketWa = document.getElementById('btn-ticket-whatsapp');
                 if (btnTicketWa) {
                     const waText = `Hi Ndi! ✨ I just requested an appointment on your website.\n\n💅 Service: ${bookingState.serviceName}\n📅 Date: ${bookingState.date}\n⏰ Time: ${bookingState.timeSlot}\n💰 Total: R${bookingState.totalPrice.toFixed(2)}\n🔖 Booking ID: ${bookingId}\n\nClient Name: ${bookingState.clientName}`;
-                    btnTicketWa.href = `https://wa.me/27820000000?text=${encodeURIComponent(waText)}`;
+                    btnTicketWa.href = `https://wa.me/27715996931?text=${encodeURIComponent(waText)}`;
                 }
 
                 // Initialize Slip Download button
                 initTicketDownloader(bookingId);
-
-                bookingForm.style.display = 'none';
-                document.querySelector('.stepper').style.display = 'none';
-                successBox.classList.add('active');
             })
             .catch(err => {
                 console.error("Booking submit failed:", err);
@@ -643,28 +645,22 @@ function initBookingWizard() {
         const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
         const scanUrl = `${origin}${basePath}admin.html?completeBooking=${encodeURIComponent(bookingId)}`;
 
-        if (typeof QRCode !== 'undefined') {
-            try {
-                new QRCode(qrContainer, {
-                    text: scanUrl,
-                    width: 120,
-                    height: 120,
-                    colorDark: "#1a120f",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.M
-                });
-                return;
-            } catch (e) {
-                console.warn("QRCode JS error, using fallback API:", e);
-            }
-        }
-
-        // Image fallback API
+        // High-contrast, crystal-clear QR image
         const img = document.createElement('img');
-        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(scanUrl)}`;
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(scanUrl)}&margin=4`;
         img.alt = `Booking QR Code ${bookingId}`;
-        img.width = 120;
-        img.height = 120;
+        img.width = 130;
+        img.height = 130;
+        img.style.display = "block";
+        img.style.margin = "0 auto";
+        img.style.borderRadius = "6px";
+        img.crossOrigin = "anonymous";
+
+        // Fallback to quickchart if qrserver fails
+        img.onerror = () => {
+            img.src = `https://quickchart.io/qr?text=${encodeURIComponent(scanUrl)}&size=160`;
+        };
+
         qrContainer.appendChild(img);
     }
 
@@ -687,6 +683,7 @@ function initBookingWizard() {
                         scale: 2,
                         backgroundColor: '#fbf9f6',
                         useCORS: true,
+                        allowTaint: true,
                         logging: false
                     });
                     const link = document.createElement('a');
@@ -1039,6 +1036,17 @@ function initBookingTracker() {
                     <strong style="color: var(--color-rose-gold-dark);">${priceFormatted}</strong>
                 </div>
                 ${noteHTML}
+                
+                <!-- Client QR Pass for Check-in -->
+                <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed rgba(200, 143, 123, 0.3); text-align: center;">
+                    <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted); letter-spacing: 0.5px; text-transform: uppercase; display: block; margin-bottom: 8px;">
+                        <i class="fa-solid fa-qrcode"></i> Your Check-in QR Code
+                    </span>
+                    <div style="background: #fff; display: inline-block; padding: 8px; border-radius: 8px; border: 1px solid rgba(220, 205, 195, 0.6); box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + 'admin.html?completeBooking=' + (b.id || ''))}&margin=3" alt="Booking QR Code" width="110" height="110" style="display:block; border-radius: 4px;">
+                    </div>
+                    <p style="font-size: 0.7rem; color: var(--color-text-muted); margin-top: 6px;">Show this to the studio upon completion of your service.</p>
+                </div>
             `;
         } catch (err) {
             console.error("Tracker search error:", err);
