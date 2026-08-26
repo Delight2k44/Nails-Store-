@@ -347,60 +347,81 @@
         </main>
     </div>
 
-    <!-- BOOKING NOTIFICATION / ACTION MODAL -->
+    <!-- BOOKING NOTIFICATION / WHATSAPP ACTION MODAL -->
     <div class="modal-backdrop" id="booking-notify-modal" style="display: none;">
-        <div class="modal-card glass-panel">
+        <div class="modal-card glass-panel modal-whatsapp-card">
             <div class="modal-header">
-                <h3 id="modal-notify-title"><i class="fa-solid fa-paper-plane"></i> Notify Client & Update Booking</h3>
-                <button type="button" class="modal-close-btn" id="btn-close-notify-modal">&times;</button>
+                <div class="modal-title-group">
+                    <h3 id="modal-notify-title">
+                        <i class="fa-brands fa-whatsapp wa-glow-icon"></i> 
+                        <span id="modal-title-text">WhatsApp Booking Notification</span>
+                    </h3>
+                    <div class="modal-status-pill" id="modal-status-pill">
+                        <span class="status-indicator"></span>
+                        <span id="modal-status-pill-text">Confirmed & Booked</span>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-notify-modal" title="Close modal">&times;</button>
             </div>
             
             <div class="modal-body">
                 <div class="notify-client-badge" id="modal-client-badge">
                     <div class="badge-avatar" id="modal-client-avatar">S</div>
                     <div class="badge-details">
-                        <h4 id="modal-client-name">Sophia Alvarez</h4>
-                        <p id="modal-client-meta"><i class="fa-solid fa-phone"></i> 0821234567 &nbsp;|&nbsp; <i class="fa-solid fa-envelope"></i> sophia@example.com</p>
+                        <div class="badge-name-row">
+                            <h4 id="modal-client-name">Sophia Alvarez</h4>
+                            <span class="wa-phone-chip" id="modal-wa-chip">
+                                <i class="fa-brands fa-whatsapp"></i> <span id="modal-wa-phone-text">082 123 4567</span>
+                            </span>
+                        </div>
+                        <p id="modal-client-meta"><i class="fa-solid fa-envelope"></i> sophia@example.com &nbsp;|&nbsp; <i class="fa-solid fa-tag"></i> Gel Manicure</p>
                     </div>
                 </div>
 
                 <div class="notify-action-selector">
-                    <label style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; color: var(--color-text-dark);">Action & Status:</label>
+                    <label class="section-label">Select Action & Booking Outcome:</label>
                     <div class="action-toggle-group">
                         <button type="button" class="btn-toggle active" data-action="confirmed" id="toggle-confirm-btn">
-                            <i class="fa-solid fa-check"></i> Approve & Confirm
+                            <i class="fa-solid fa-circle-check"></i> Approve & Booked
                         </button>
                         <button type="button" class="btn-toggle" data-action="cancelled" id="toggle-cancel-btn">
-                            <i class="fa-solid fa-ban"></i> Decline & Cancel
+                            <i class="fa-solid fa-circle-xmark"></i> Decline & Cancelled
                         </button>
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-top: 15px;">
-                    <label for="modal-custom-message">Custom Note / Reason for Client (Optional)</label>
+                    <label for="modal-custom-message" id="modal-custom-message-label">
+                        <i class="fa-solid fa-pen-to-square"></i> Studio Note / Custom Reason (Optional)
+                    </label>
                     <input type="text" id="modal-custom-message" placeholder="e.g. Please arrive 5 minutes early, or let us know if you need to reschedule.">
                 </div>
 
                 <div class="form-group">
                     <div class="preview-header">
-                        <label><i class="fa-solid fa-message"></i> Message Preview (WhatsApp & Email)</label>
-                        <button type="button" class="btn-copy-msg" id="btn-copy-msg"><i class="fa-regular fa-copy"></i> Copy Text</button>
+                        <label><i class="fa-brands fa-whatsapp"></i> WhatsApp Message Preview</label>
+                        <button type="button" class="btn-copy-msg" id="btn-copy-msg" title="Copy to clipboard">
+                            <i class="fa-regular fa-copy"></i> Copy Text
+                        </button>
                     </div>
-                    <textarea id="modal-msg-preview" rows="6" readonly class="message-preview-textarea"></textarea>
+                    <textarea id="modal-msg-preview" rows="7" readonly class="message-preview-textarea"></textarea>
+                    <p class="preview-hint" id="modal-phone-hint">
+                        <i class="fa-solid fa-circle-info"></i> Clicking <strong>Send WhatsApp</strong> will save this booking status in the database and automatically open WhatsApp with this client message.
+                    </p>
                 </div>
             </div>
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="btn-cancel-notify-modal">Cancel</button>
                 <div class="modal-send-actions">
-                    <a href="#" target="_blank" class="btn btn-whatsapp" id="btn-modal-whatsapp">
-                        <i class="fa-brands fa-whatsapp"></i> Send WhatsApp
+                    <a href="#" class="btn btn-email" id="btn-modal-email" title="Send confirmation via email">
+                        <i class="fa-solid fa-envelope"></i> Email
                     </a>
-                    <a href="#" class="btn btn-email" id="btn-modal-email">
-                        <i class="fa-solid fa-envelope"></i> Send Email
-                    </a>
-                    <button type="button" class="btn btn-primary" id="btn-modal-confirm-status">
-                        <i class="fa-solid fa-circle-check"></i> Update Status
+                    <button type="button" class="btn btn-status-only" id="btn-modal-confirm-status" title="Save status without opening WhatsApp">
+                        <i class="fa-solid fa-check"></i> <span id="btn-status-only-text">Save Status Only</span>
+                    </button>
+                    <button type="button" class="btn btn-whatsapp-primary" id="btn-modal-whatsapp" title="Approve and open WhatsApp chat">
+                        <i class="fa-brands fa-whatsapp"></i> <span id="btn-modal-wa-text">Send WhatsApp Message</span>
                     </button>
                 </div>
             </div>
