@@ -237,10 +237,11 @@
                 </div>
             </div>
 
-            <!-- TAB 4: PORTFOLIO GALLERY UPLOADER -->
+            <!-- TAB 4: PORTFOLIO GALLERY UPLOADER & DESIGNS MANAGER -->
             <div class="tab-content" id="uploader-tab">
+                <!-- Upload New Design Card -->
                 <div class="uploader-container glass-panel">
-                    <h3>Upload New Nail Art Design</h3>
+                    <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--color-rose-gold-dark);"></i> Upload New Nail Art Design</h3>
                     <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 25px; font-weight: 300;">Fill out details below and select a JPEG/PNG file to publish it directly to the gallery.</p>
                     
                     <form id="nail-upload-form">
@@ -278,6 +279,33 @@
                         
                         <button type="submit" class="btn btn-primary btn-publish-nail" id="btn-submit-upload">Publish to Gallery <i class="fa-solid fa-paper-plane"></i></button>
                     </form>
+                </div>
+
+                <!-- Published Nail Art Designs Manager Card -->
+                <div class="glass-panel" style="margin-top: 30px; padding: 35px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+                        <div>
+                            <h3 style="font-size: 1.4rem; margin-bottom: 4px;"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--color-rose-gold-dark);"></i> Manage Portfolio Gallery</h3>
+                            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; font-weight: 300;">Edit design titles, change style categories, or delete designs from the website gallery.</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="badge-count" id="admin-gallery-count-badge">0 designs</span>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter Buttons for Admin Gallery -->
+                    <div class="admin-filter-bar" style="display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap;">
+                        <button type="button" class="admin-filter-chip active" data-category="all">All Designs</button>
+                        <button type="button" class="admin-filter-chip" data-category="gel">Gel Manicure</button>
+                        <button type="button" class="admin-filter-chip" data-category="acrylic">Acrylic</button>
+                        <button type="button" class="admin-filter-chip" data-category="chrome">Glazed Chrome</button>
+                        <button type="button" class="admin-filter-chip" data-category="art">Custom Art</button>
+                    </div>
+
+                    <!-- Gallery Designs Grid -->
+                    <div class="admin-gallery-grid" id="admin-gallery-grid">
+                        <p style="color: var(--color-text-muted); font-size: 0.85rem;">Loading gallery designs...</p>
+                    </div>
                 </div>
             </div>
 
@@ -324,8 +352,15 @@
 
                 <!-- Section 2: Pricing Manager -->
                 <div class="cms-section glass-panel" style="margin-top: 30px;">
-                    <h3><i class="fa-solid fa-tags"></i> Service Pricing</h3>
-                    <p class="cms-section-desc">Edit the prices and session durations for your services. Changes go live on the website immediately after saving.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="margin-bottom: 0;"><i class="fa-solid fa-tags"></i> Service Pricing</h3>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-add-item" id="btn-open-add-service-modal" style="font-size: 0.82rem; padding: 8px 16px;">
+                            <i class="fa-solid fa-plus"></i> Add New Service
+                        </button>
+                    </div>
+                    <p class="cms-section-desc">Add, edit, or delete services and session durations. Changes go live on the website immediately after saving.</p>
 
                     <div id="services-pricing-list" class="pricing-editor-list">
                         <p style="color: var(--color-text-muted); font-size: 0.85rem;">Loading services...</p>
@@ -334,8 +369,15 @@
 
                 <!-- Section 3: Addons Pricing -->
                 <div class="cms-section glass-panel" style="margin-top: 30px;">
-                    <h3><i class="fa-solid fa-puzzle-piece"></i> Add-on Pricing</h3>
-                    <p class="cms-section-desc">Edit the prices for optional booking add-ons.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="margin-bottom: 0;"><i class="fa-solid fa-puzzle-piece"></i> Add-on Pricing</h3>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-add-item" id="btn-open-add-addon-modal" style="font-size: 0.82rem; padding: 8px 16px;">
+                            <i class="fa-solid fa-plus"></i> Add New Add-on
+                        </button>
+                    </div>
+                    <p class="cms-section-desc">Add, edit, or delete optional booking add-ons.</p>
 
                     <div id="addons-pricing-list" class="pricing-editor-list">
                         <p style="color: var(--color-text-muted); font-size: 0.85rem;">Loading add-ons...</p>
@@ -508,6 +550,144 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="btn-cancel-qr-modal">Close Scanner</button>
             </div>
+        </div>
+    </div>
+
+    <!-- EDIT NAIL DESIGN MODAL -->
+    <div class="modal-backdrop" id="edit-nail-modal" style="display: none;">
+        <div class="modal-card glass-panel" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h3><i class="fa-solid fa-pen-to-square" style="color: var(--color-rose-gold-dark);"></i> Edit Nail Design</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Update design title, gallery style category, or replace photo.</p>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-edit-nail-modal" title="Close modal">&times;</button>
+            </div>
+            <form id="edit-nail-form">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-nail-docid">
+                    
+                    <div class="form-group">
+                        <label for="edit-nail-title">Design Title</label>
+                        <input type="text" id="edit-nail-title" placeholder="E.g. Holographic Chrome Tip" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-nail-category">Gallery Category</label>
+                        <select id="edit-nail-category" required>
+                            <option value="gel">Gel Manicure</option>
+                            <option value="acrylic">Acrylic Extensions</option>
+                            <option value="chrome">Glazed Chrome</option>
+                            <option value="art">Custom Nail Art</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Current Design Photo</label>
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                            <img id="edit-nail-current-img" src="" alt="Current Design" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover; border: 1px solid var(--glass-border);">
+                            <div style="flex: 1;">
+                                <label for="edit-nail-file-input" style="font-size: 0.8rem; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Replace Image (Optional):</label>
+                                <input type="file" id="edit-nail-file-input" accept="image/*" style="font-size: 0.8rem;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="upload-progress-container" id="edit-nail-progress-container" style="display: none;">
+                        <div class="upload-progress-bar" id="edit-nail-progress-bar"></div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-edit-nail">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-edit-nail">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD / EDIT SERVICE MODAL -->
+    <div class="modal-backdrop" id="service-modal" style="display: none;">
+        <div class="modal-card glass-panel" style="max-width: 540px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h3 id="service-modal-title"><i class="fa-solid fa-sparkles" style="color: var(--color-rose-gold-dark);"></i> Add New Service</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Provide service name, category, price, duration, and client description.</p>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-service-modal" title="Close modal">&times;</button>
+            </div>
+            <form id="service-form">
+                <div class="modal-body">
+                    <input type="hidden" id="service-modal-docid">
+                    
+                    <div class="form-group">
+                        <label for="service-modal-name">Service Name</label>
+                        <input type="text" id="service-modal-name" placeholder="e.g. Russian Gel Manicure" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="service-modal-category">Category Badge</label>
+                        <input type="text" id="service-modal-category" placeholder="e.g. MANICURE, EXTENSIONS, SPECIALTY, DESIGN" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="service-modal-price">Price (R)</label>
+                            <input type="number" id="service-modal-price" placeholder="45" min="0" step="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="service-modal-duration">Duration (Minutes)</label>
+                            <input type="number" id="service-modal-duration" placeholder="45" min="5" step="5" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="service-modal-desc">Service Description (Shown on Website)</label>
+                        <textarea id="service-modal-desc" rows="3" placeholder="Describe the treatment, cuticles care, high-gloss gel finish, etc." style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--glass-border); font-family: inherit; font-size: 0.88rem;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-service-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-service-modal">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Service
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD / EDIT ADD-ON MODAL -->
+    <div class="modal-backdrop" id="addon-modal" style="display: none;">
+        <div class="modal-card glass-panel" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h3 id="addon-modal-title"><i class="fa-solid fa-puzzle-piece" style="color: var(--color-rose-gold-dark);"></i> Add New Add-on</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Add an optional extra for client bookings.</p>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-addon-modal" title="Close modal">&times;</button>
+            </div>
+            <form id="addon-form">
+                <div class="modal-body">
+                    <input type="hidden" id="addon-modal-docid">
+                    
+                    <div class="form-group">
+                        <label for="addon-modal-name">Add-on Name</label>
+                        <input type="text" id="addon-modal-name" placeholder="e.g. 3D Nail Charms (x2)" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="addon-modal-price">Price (R)</label>
+                        <input type="number" id="addon-modal-price" placeholder="10" min="0" step="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-addon-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-addon-modal">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Add-on
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

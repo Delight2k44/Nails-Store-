@@ -305,6 +305,8 @@ menuItems.forEach(item => {
         if (tabName === 'settings') {
             renderServicesPricingEditor();
             renderAddonsPricingEditor();
+        } else if (tabName === 'uploader') {
+            renderNailsGalleryManager();
         }
     });
 });
@@ -376,9 +378,16 @@ function initDashboardData() {
         unsubNails = onSnapshot(nailsQuery, (snapshot) => {
             nailsList = [];
             snapshot.forEach(docSnap => {
-                nailsList.push(docSnap.data());
+                nailsList.push({ docId: docSnap.id, ...docSnap.data() });
+            });
+            // Sort by createdAt desc locally
+            nailsList.sort((a, b) => {
+                const timeA = a.createdAt?.seconds || 0;
+                const timeB = b.createdAt?.seconds || 0;
+                return timeB - timeA;
             });
             updateStats();
+            renderNailsGalleryManager();
         }, (err) => {
             console.error("Nails list stream error:", err);
         });
@@ -1122,117 +1131,365 @@ function deleteReview(docId, btnElement) {
 /* ==========================================
    PORTFOLIO GALLERY UPLOADER BEHAVIORS
    ========================================== */
+/* ==========================================
+   PORTFOLIO GALLERY: UPLOADER & DESIGNS MANAGER (CRUD)
+   ========================================== */
+let activeNailsFilter = 'all';
+
 function initUploaderBehaviors() {
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('nail-file-input');
     const preview = document.getElementById('upload-preview');
-    const uploadIcon = dropZone.querySelector('.upload-icon');
-    const text1 = dropZone.querySelector('p:nth-of-type(1)');
-    const text2 = dropZone.querySelector('p:nth-of-type(2)');
+    const uploadIcon = dropZone ? dropZone.querySelector('.upload-icon') : null;
+    const text1 = dropZone ? dropZone.querySelector('p:nth-of-type(1)') : null;
+    const text2 = dropZone ? dropZone.querySelector('p:nth-of-type(2)') : null;
 
-    fileInput.addEventListener('change', () => {
-        const file = fileInput.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('File too large. Maximum size is 5MB.', 'warning');
-                fileInput.value = '';
-                return;
+    if (fileInput) {
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('File too large. Maximum size is 5MB.', 'warning');
+                    fileInput.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (uploadIcon) uploadIcon.style.display = 'none';
+                    if (text1) text1.style.display = 'none';
+                    if (text2) text2.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
             }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-                uploadIcon.style.display = 'none';
-                text1.style.display = 'none';
-                text2.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+        });
+    }
 
     const form = document.getElementById('nail-upload-form');
     const progressContainer = document.getElementById('upload-progress-container');
     const progressBar = document.getElementById('upload-progress-bar');
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-        const title = document.getElementById('nail-title').value.trim();
-        const category = document.getElementById('nail-category').value;
-        const file = fileInput.files[0];
+            const title = document.getElementById('nail-title').value.trim();
+            const category = document.getElementById('nail-category').value;
+            const file = fileInput ? fileInput.files[0] : null;
 
-        if (!file) {
-            showToast('Please select a nail photo to upload.', 'warning');
-            return;
-        }
+            if (!file) {
+                showToast('Please select a nail photo to upload.', 'warning');
+                return;
+            }
 
-        const btnPublish = document.getElementById('btn-submit-upload');
-        const origText = btnPublish.innerHTML;
-        btnPublish.disabled = true;
-        btnPublish.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
-        
-        progressContainer.style.display = 'block';
-        progressBar.style.width = '0%';
+            const btnPublish = document.getElementById('btn-submit-upload');
+            const origText = btnPublish ? btnPublish.innerHTML : 'Publish to Gallery';
+            if (btnPublish) {
+                btnPublish.disabled = true;
+                btnPublish.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+            }
+            
+            if (progressContainer) progressContainer.style.display = 'block';
+            if (progressBar) progressBar.style.width = '0%';
 
-        const fileRef = ref(storage, `nails/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(fileRef, file);
+            const fileRef = ref(storage, `nails/${Date.now()}_${file.name}`);
+            const uploadTask = uploadBytesResumable(fileRef, file);
 
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                progressBar.style.width = `${progress}%`;
-            }, 
-            (error) => {
-                console.error("Upload error:", error);
-                showToast('Upload failed. Please check your connection and try again.', 'error');
-                btnPublish.disabled = false;
-                btnPublish.innerHTML = origText;
-                progressContainer.style.display = 'none';
-            }, 
-            () => {
-                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                    addDoc(collection(db, "nails"), {
-                        title: title,
-                        category: category,
-                        imageUrl: downloadURL,
-                        createdAt: Timestamp.now()
-                    })
-                    .then(() => {
-                        showToast('Nail design published to the gallery!', 'success');
-                        
-                        form.reset();
-                        preview.style.display = 'none';
-                        preview.src = '';
-                        uploadIcon.style.display = 'block';
-                        text1.style.display = 'block';
-                        text2.style.display = 'block';
-                        progressContainer.style.display = 'none';
-                        progressBar.style.width = '0%';
-                        
-                        document.querySelector('.menu-item[data-tab="overview"]').click();
-                    })
-                    .catch(err => {
-                        console.error("Firestore save error:", err);
-                        showToast('Error saving nail metadata to database.', 'error');
-                    })
-                    .finally(() => {
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    if (progressBar) progressBar.style.width = `${progress}%`;
+                }, 
+                (error) => {
+                    console.error("Upload error:", error);
+                    showToast('Upload failed. Please check your connection and try again.', 'error');
+                    if (btnPublish) {
                         btnPublish.disabled = false;
                         btnPublish.innerHTML = origText;
+                    }
+                    if (progressContainer) progressContainer.style.display = 'none';
+                }, 
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                        addDoc(collection(db, "nails"), {
+                            title: title,
+                            category: category,
+                            imageUrl: downloadURL,
+                            createdAt: Timestamp.now()
+                        })
+                        .then(() => {
+                            showToast('✨ Nail design published to the live gallery!', 'success');
+                            
+                            form.reset();
+                            if (preview) {
+                                preview.style.display = 'none';
+                                preview.src = '';
+                            }
+                            if (uploadIcon) uploadIcon.style.display = 'block';
+                            if (text1) text1.style.display = 'block';
+                            if (text2) text2.style.display = 'block';
+                            if (progressContainer) progressContainer.style.display = 'none';
+                            if (progressBar) progressBar.style.width = '0%';
+                        })
+                        .catch(err => {
+                            console.error("Firestore save error:", err);
+                            showToast('Error saving nail metadata to database.', 'error');
+                        })
+                        .finally(() => {
+                            if (btnPublish) {
+                                btnPublish.disabled = false;
+                                btnPublish.innerHTML = origText;
+                            }
+                        });
+                    }).catch(err => {
+                        console.error("Download URL error:", err);
+                        showToast('Failed to get download URL. Try again.', 'error');
+                        if (btnPublish) {
+                            btnPublish.disabled = false;
+                            btnPublish.innerHTML = origText;
+                        }
+                        if (progressContainer) progressContainer.style.display = 'none';
                     });
-                }).catch(err => {
-                    console.error("Download URL error:", err);
-                    showToast('Failed to get download URL. Try again.', 'error');
-                    btnPublish.disabled = false;
-                    btnPublish.innerHTML = origText;
-                    progressContainer.style.display = 'none';
-                });
-            }
-        );
+                }
+            );
+        });
+    }
+
+    // Filter Chips for Admin Gallery
+    const filterChips = document.querySelectorAll('.admin-filter-chip');
+    filterChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            filterChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            activeNailsFilter = chip.getAttribute('data-category') || 'all';
+            renderNailsGalleryManager();
+        });
+    });
+
+    // Wire Edit Nail Modal
+    const btnCloseEditNail = document.getElementById('btn-close-edit-nail-modal');
+    const btnCancelEditNail = document.getElementById('btn-cancel-edit-nail');
+    const editNailModal = document.getElementById('edit-nail-modal');
+    const editNailForm = document.getElementById('edit-nail-form');
+
+    if (btnCloseEditNail) btnCloseEditNail.addEventListener('click', closeEditNailModal);
+    if (btnCancelEditNail) btnCancelEditNail.addEventListener('click', closeEditNailModal);
+    if (editNailModal) {
+        editNailModal.addEventListener('click', (e) => {
+            if (e.target === editNailModal) closeEditNailModal();
+        });
+    }
+
+    if (editNailForm) {
+        editNailForm.addEventListener('submit', handleSaveNailEdit);
+    }
+}
+
+function renderNailsGalleryManager() {
+    const grid = document.getElementById('admin-gallery-grid');
+    const badge = document.getElementById('admin-gallery-count-badge');
+    const statGallery = document.getElementById('stat-gallery-count');
+    
+    if (statGallery) statGallery.innerText = nailsList.length;
+    if (badge) badge.innerText = `${nailsList.length} design${nailsList.length === 1 ? '' : 's'}`;
+
+    if (!grid) return;
+
+    let filtered = nailsList;
+    if (activeNailsFilter !== 'all') {
+        filtered = nailsList.filter(n => (n.category || '').toLowerCase() === activeNailsFilter.toLowerCase());
+    }
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--color-text-muted);">
+                <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 2rem; color: var(--color-rose-gold); margin-bottom: 10px; display: block;"></i>
+                <p style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">No nail designs found in this category</p>
+                <p style="font-size: 0.8rem;">Upload a new nail photo above to publish it directly to your live portfolio.</p>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = '';
+
+    filtered.forEach(nail => {
+        const card = document.createElement('div');
+        card.className = 'admin-gallery-card';
+        
+        let catLabel = 'Gel';
+        if (nail.category === 'acrylic') catLabel = 'Acrylic';
+        else if (nail.category === 'chrome') catLabel = 'Chrome';
+        else if (nail.category === 'art') catLabel = 'Custom Art';
+        else if (nail.category) catLabel = nail.category.toUpperCase();
+
+        const formattedDate = nail.createdAt?.toDate ? nail.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently Added';
+
+        card.innerHTML = `
+            <div class="admin-gallery-thumb-wrapper">
+                <img src="${nail.imageUrl || 'assets/hero.jpg'}" alt="${nail.title || 'Nail Design'}" class="admin-gallery-thumb" loading="lazy">
+                <span class="admin-gallery-badge">${catLabel}</span>
+            </div>
+            <div class="admin-gallery-details">
+                <div class="admin-gallery-title">${nail.title || 'Untitled Design'}</div>
+                <div class="admin-gallery-meta"><i class="fa-regular fa-calendar"></i> ${formattedDate}</div>
+                <div class="admin-gallery-actions">
+                    <button type="button" class="btn-card-action edit btn-edit-nail" data-docid="${nail.docId}">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button type="button" class="btn-card-action delete btn-delete-nail" data-docid="${nail.docId}">
+                        <i class="fa-solid fa-trash-can"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const btnEdit = card.querySelector('.btn-edit-nail');
+        if (btnEdit) {
+            btnEdit.addEventListener('click', () => openEditNailModal(nail.docId));
+        }
+
+        const btnDelete = card.querySelector('.btn-delete-nail');
+        if (btnDelete) {
+            btnDelete.addEventListener('click', () => deleteNailDesign(nail.docId, nail.title));
+        }
+
+        grid.appendChild(card);
     });
 }
 
+function openEditNailModal(docId) {
+    const nail = nailsList.find(n => n.docId === docId);
+    if (!nail) return;
+
+    const modal = document.getElementById('edit-nail-modal');
+    const docIdInput = document.getElementById('edit-nail-docid');
+    const titleInput = document.getElementById('edit-nail-title');
+    const categorySelect = document.getElementById('edit-nail-category');
+    const currentImg = document.getElementById('edit-nail-current-img');
+    const fileInput = document.getElementById('edit-nail-file-input');
+    const progressContainer = document.getElementById('edit-nail-progress-container');
+
+    if (docIdInput) docIdInput.value = docId;
+    if (titleInput) titleInput.value = nail.title || '';
+    if (categorySelect) categorySelect.value = nail.category || 'gel';
+    if (currentImg) currentImg.src = nail.imageUrl || 'assets/hero.jpg';
+    if (fileInput) fileInput.value = '';
+    if (progressContainer) progressContainer.style.display = 'none';
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeEditNailModal() {
+    const modal = document.getElementById('edit-nail-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function handleSaveNailEdit(e) {
+    e.preventDefault();
+
+    const docId = document.getElementById('edit-nail-docid')?.value;
+    const newTitle = document.getElementById('edit-nail-title')?.value.trim();
+    const newCategory = document.getElementById('edit-nail-category')?.value;
+    const fileInput = document.getElementById('edit-nail-file-input');
+    const newFile = fileInput?.files?.[0];
+
+    if (!docId || !newTitle) {
+        showToast('Please fill out the design title.', 'warning');
+        return;
+    }
+
+    const btnSubmit = document.getElementById('btn-submit-edit-nail');
+    const origHtml = btnSubmit?.innerHTML || 'Save Changes';
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    }
+
+    const progressContainer = document.getElementById('edit-nail-progress-container');
+    const progressBar = document.getElementById('edit-nail-progress-bar');
+
+    try {
+        let updatedImageUrl = null;
+
+        if (newFile) {
+            if (progressContainer) progressContainer.style.display = 'block';
+            if (progressBar) progressBar.style.width = '0%';
+
+            const fileRef = ref(storage, `nails/${Date.now()}_${newFile.name}`);
+            const uploadTask = uploadBytesResumable(fileRef, newFile);
+
+            await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        if (progressBar) progressBar.style.width = `${progress}%`;
+                    },
+                    (err) => reject(err),
+                    () => {
+                        getDownloadURL(uploadTask.snapshot.ref).then(url => {
+                            updatedImageUrl = url;
+                            resolve();
+                        }).catch(reject);
+                    }
+                );
+            });
+        }
+
+        const updateData = {
+            title: newTitle,
+            category: newCategory
+        };
+        if (updatedImageUrl) updateData.imageUrl = updatedImageUrl;
+
+        await setDoc(doc(db, "nails", docId), updateData, { merge: true });
+
+        // Update in memory list
+        const idx = nailsList.findIndex(n => n.docId === docId);
+        if (idx !== -1) {
+            nailsList[idx].title = newTitle;
+            nailsList[idx].category = newCategory;
+            if (updatedImageUrl) nailsList[idx].imageUrl = updatedImageUrl;
+        }
+
+        showToast('✨ Nail design updated successfully!', 'success');
+        closeEditNailModal();
+        renderNailsGalleryManager();
+
+    } catch (err) {
+        console.error("Save nail edit error:", err);
+        showToast(`Failed to update nail design: ${err.message || 'Error'}`, 'error');
+    } finally {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = origHtml;
+        }
+        if (progressContainer) progressContainer.style.display = 'none';
+    }
+}
+
+function deleteNailDesign(docId, title = 'this design') {
+    const confirmed = confirm(`Are you sure you want to delete "${title}" from the gallery? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    deleteDoc(doc(db, "nails", docId))
+        .then(() => {
+            nailsList = nailsList.filter(n => n.docId !== docId);
+            updateStats();
+            renderNailsGalleryManager();
+            showToast(`🗑️ "${title}" deleted from the gallery.`, 'info');
+        })
+        .catch(err => {
+            console.error("Delete nail error:", err);
+            showToast(`Failed to delete design: ${err.message || 'Error'}`, 'error');
+        });
+}
+
 /* ==========================================
-   CMS: PRICING EDITOR & LAYOUT IMAGE MANAGER
+   CMS: SERVICES & ADD-ONS PRICING MANAGER (CRUD)
    ========================================== */
 
 async function seedDefaultServicesAndAddons(force = false) {
@@ -1253,7 +1510,7 @@ async function seedDefaultServicesAndAddons(force = false) {
 }
 
 function initCMSBehaviors() {
-    // Initial immediate render so inputs are populated instantly
+    // Initial immediate renders
     renderServicesPricingEditor();
     renderAddonsPricingEditor();
 
@@ -1323,6 +1580,40 @@ function initCMSBehaviors() {
             }
         });
     }
+
+    // --- Service Modal Triggers ---
+    const btnOpenAddService = document.getElementById('btn-open-add-service-modal');
+    const btnCloseServiceModal = document.getElementById('btn-close-service-modal');
+    const btnCancelServiceModal = document.getElementById('btn-cancel-service-modal');
+    const serviceModal = document.getElementById('service-modal');
+    const serviceForm = document.getElementById('service-form');
+
+    if (btnOpenAddService) btnOpenAddService.addEventListener('click', openAddServiceModal);
+    if (btnCloseServiceModal) btnCloseServiceModal.addEventListener('click', closeServiceModal);
+    if (btnCancelServiceModal) btnCancelServiceModal.addEventListener('click', closeServiceModal);
+    if (serviceModal) {
+        serviceModal.addEventListener('click', (e) => {
+            if (e.target === serviceModal) closeServiceModal();
+        });
+    }
+    if (serviceForm) serviceForm.addEventListener('submit', handleSaveServiceModal);
+
+    // --- Add-on Modal Triggers ---
+    const btnOpenAddAddon = document.getElementById('btn-open-add-addon-modal');
+    const btnCloseAddonModal = document.getElementById('btn-close-addon-modal');
+    const btnCancelAddonModal = document.getElementById('btn-cancel-addon-modal');
+    const addonModal = document.getElementById('addon-modal');
+    const addonForm = document.getElementById('addon-form');
+
+    if (btnOpenAddAddon) btnOpenAddAddon.addEventListener('click', openAddAddonModal);
+    if (btnCloseAddonModal) btnCloseAddonModal.addEventListener('click', closeAddonModal);
+    if (btnCancelAddonModal) btnCancelAddonModal.addEventListener('click', closeAddonModal);
+    if (addonModal) {
+        addonModal.addEventListener('click', (e) => {
+            if (e.target === addonModal) closeAddonModal();
+        });
+    }
+    if (addonForm) addonForm.addEventListener('submit', handleSaveAddonModal);
 
     // --- Load Email Configuration ---
     getResendConfig().then(config => {
@@ -1455,7 +1746,7 @@ function uploadLayoutImage(file, fieldName, btnElement, previewId) {
     );
 }
 
-/* --- Services Pricing Editor --- */
+/* --- Services Pricing Editor & Actions --- */
 function renderServicesPricingEditor() {
     const container = document.getElementById('services-pricing-list');
     if (!container) return;
@@ -1471,6 +1762,7 @@ function renderServicesPricingEditor() {
             <div class="pricing-edit-info">
                 <span class="pricing-edit-category">${service.category || 'SERVICE'}</span>
                 <span class="pricing-edit-name">${service.name}</span>
+                ${service.description ? `<p style="font-size: 0.76rem; color: var(--color-text-muted); margin: 3px 0 0; font-weight: 300;">${service.description}</p>` : ''}
             </div>
             <div class="pricing-edit-controls">
                 <label>Price (R)</label>
@@ -1478,8 +1770,14 @@ function renderServicesPricingEditor() {
                 <label>Duration</label>
                 <input type="number" class="pricing-input service-duration-input" data-docid="${service.docId}" value="${service.duration || 45}" min="5" step="5">
                 <span class="duration-suffix">mins</span>
-                <button type="button" class="btn-row-save btn-save-single-service" data-docid="${service.docId}">
+                <button type="button" class="btn-row-save btn-save-single-service" data-docid="${service.docId}" title="Save Price & Duration">
                     <i class="fa-solid fa-floppy-disk"></i> Save
+                </button>
+                <button type="button" class="btn-row-edit btn-edit-service-trigger" data-docid="${service.docId}" title="Edit Name & Description">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="btn-row-delete btn-delete-service-trigger" data-docid="${service.docId}" title="Delete Service">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
         `;
@@ -1492,8 +1790,152 @@ function renderServicesPricingEditor() {
             });
         }
 
+        // Wire edit details modal
+        const btnEditTrigger = row.querySelector('.btn-edit-service-trigger');
+        if (btnEditTrigger) {
+            btnEditTrigger.addEventListener('click', () => {
+                openEditServiceModal(service.docId);
+            });
+        }
+
+        // Wire delete
+        const btnDeleteTrigger = row.querySelector('.btn-delete-service-trigger');
+        if (btnDeleteTrigger) {
+            btnDeleteTrigger.addEventListener('click', () => {
+                deleteService(service.docId, service.name);
+            });
+        }
+
         container.appendChild(row);
     });
+}
+
+function openAddServiceModal() {
+    const modal = document.getElementById('service-modal');
+    const modalTitle = document.getElementById('service-modal-title');
+    const docIdInput = document.getElementById('service-modal-docid');
+    const nameInput = document.getElementById('service-modal-name');
+    const catInput = document.getElementById('service-modal-category');
+    const priceInput = document.getElementById('service-modal-price');
+    const durationInput = document.getElementById('service-modal-duration');
+    const descInput = document.getElementById('service-modal-desc');
+
+    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-sparkles" style="color: var(--color-rose-gold-dark);"></i> Add New Service';
+    if (docIdInput) docIdInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (catInput) catInput.value = 'SPECIALTY';
+    if (priceInput) priceInput.value = '50';
+    if (durationInput) durationInput.value = '45';
+    if (descInput) descInput.value = '';
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function openEditServiceModal(docId) {
+    const service = servicesList.find(s => s.docId === docId) || DEFAULT_SERVICES.find(s => s.docId === docId);
+    if (!service) return;
+
+    const modal = document.getElementById('service-modal');
+    const modalTitle = document.getElementById('service-modal-title');
+    const docIdInput = document.getElementById('service-modal-docid');
+    const nameInput = document.getElementById('service-modal-name');
+    const catInput = document.getElementById('service-modal-category');
+    const priceInput = document.getElementById('service-modal-price');
+    const durationInput = document.getElementById('service-modal-duration');
+    const descInput = document.getElementById('service-modal-desc');
+
+    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-pen-to-square" style="color: var(--color-rose-gold-dark);"></i> Edit Service Details';
+    if (docIdInput) docIdInput.value = docId;
+    if (nameInput) nameInput.value = service.name || '';
+    if (catInput) catInput.value = service.category || 'SERVICE';
+    if (priceInput) priceInput.value = service.price || 45;
+    if (durationInput) durationInput.value = service.duration || 45;
+    if (descInput) descInput.value = service.description || '';
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeServiceModal() {
+    const modal = document.getElementById('service-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function handleSaveServiceModal(e) {
+    e.preventDefault();
+
+    let docId = document.getElementById('service-modal-docid')?.value;
+    const name = document.getElementById('service-modal-name')?.value.trim();
+    const category = document.getElementById('service-modal-category')?.value.trim().toUpperCase() || 'SERVICE';
+    const price = parseFloat(document.getElementById('service-modal-price')?.value);
+    const duration = parseInt(document.getElementById('service-modal-duration')?.value) || 45;
+    const description = document.getElementById('service-modal-desc')?.value.trim();
+
+    if (!name || isNaN(price) || price < 0) {
+        showToast('Please provide a valid service name and price.', 'warning');
+        return;
+    }
+
+    if (!docId) {
+        // Create deterministic slug id for new service
+        docId = 'service_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + Date.now();
+    }
+
+    const btnSubmit = document.getElementById('btn-submit-service-modal');
+    const origHtml = btnSubmit ? btnSubmit.innerHTML : 'Save Service';
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    }
+
+    const serviceData = {
+        name,
+        category,
+        price,
+        duration,
+        description,
+        order: servicesList.length + 1
+    };
+
+    try {
+        await setDoc(doc(db, "services", docId), serviceData, { merge: true });
+
+        // Update in memory list
+        const idx = servicesList.findIndex(s => s.docId === docId);
+        if (idx !== -1) {
+            servicesList[idx] = { docId, ...serviceData };
+        } else {
+            servicesList.push({ docId, ...serviceData });
+        }
+        servicesList.sort((a, b) => (a.order || 99) - (b.order || 99));
+
+        showToast(`✨ Service "${name}" saved successfully!`, 'success');
+        closeServiceModal();
+        renderServicesPricingEditor();
+    } catch (err) {
+        console.error("Save service modal error:", err);
+        showToast(`Failed to save service: ${err.message || 'Error'}`, 'error');
+    } finally {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = origHtml;
+        }
+    }
+}
+
+function deleteService(docId, serviceName = 'this service') {
+    const confirmed = confirm(`Are you sure you want to delete "${serviceName}" from your services? Clients will no longer see it.`);
+    if (!confirmed) return;
+
+    deleteDoc(doc(db, "services", docId))
+        .then(() => {
+            servicesList = servicesList.filter(s => s.docId !== docId);
+            renderServicesPricingEditor();
+            showToast(`🗑️ Service "${serviceName}" deleted.`, 'info');
+        })
+        .catch(err => {
+            console.error("Delete service error:", err);
+            showToast(`Failed to delete service: ${err.message || 'Error'}`, 'error');
+        });
 }
 
 function saveSingleServicePrice(docId, btnElement) {
@@ -1544,7 +1986,7 @@ function saveSingleServicePrice(docId, btnElement) {
         });
 }
 
-/* --- Addons Pricing Editor --- */
+/* --- Addons Pricing Editor & Actions --- */
 function renderAddonsPricingEditor() {
     const container = document.getElementById('addons-pricing-list');
     if (!container) return;
@@ -1563,8 +2005,14 @@ function renderAddonsPricingEditor() {
             <div class="pricing-edit-controls">
                 <label>Price (R)</label>
                 <input type="number" class="pricing-input addon-price-input" data-docid="${addon.docId}" value="${addon.price}" min="0" step="1">
-                <button type="button" class="btn-row-save btn-save-single-addon" data-docid="${addon.docId}">
+                <button type="button" class="btn-row-save btn-save-single-addon" data-docid="${addon.docId}" title="Save Price">
                     <i class="fa-solid fa-floppy-disk"></i> Save
+                </button>
+                <button type="button" class="btn-row-edit btn-edit-addon-trigger" data-docid="${addon.docId}" title="Edit Name">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="btn-row-delete btn-delete-addon-trigger" data-docid="${addon.docId}" title="Delete Add-on">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
         `;
@@ -1577,8 +2025,127 @@ function renderAddonsPricingEditor() {
             });
         }
 
+        // Wire edit modal
+        const btnEditTrigger = row.querySelector('.btn-edit-addon-trigger');
+        if (btnEditTrigger) {
+            btnEditTrigger.addEventListener('click', () => {
+                openEditAddonModal(addon.docId);
+            });
+        }
+
+        // Wire delete
+        const btnDeleteTrigger = row.querySelector('.btn-delete-addon-trigger');
+        if (btnDeleteTrigger) {
+            btnDeleteTrigger.addEventListener('click', () => {
+                deleteAddon(addon.docId, addon.name);
+            });
+        }
+
         container.appendChild(row);
     });
+}
+
+function openAddAddonModal() {
+    const modal = document.getElementById('addon-modal');
+    const modalTitle = document.getElementById('addon-modal-title');
+    const docIdInput = document.getElementById('addon-modal-docid');
+    const nameInput = document.getElementById('addon-modal-name');
+    const priceInput = document.getElementById('addon-modal-price');
+
+    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-puzzle-piece" style="color: var(--color-rose-gold-dark);"></i> Add New Add-on';
+    if (docIdInput) docIdInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (priceInput) priceInput.value = '10';
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function openEditAddonModal(docId) {
+    const addon = addonsList.find(a => a.docId === docId) || DEFAULT_ADDONS.find(a => a.docId === docId);
+    if (!addon) return;
+
+    const modal = document.getElementById('addon-modal');
+    const modalTitle = document.getElementById('addon-modal-title');
+    const docIdInput = document.getElementById('addon-modal-docid');
+    const nameInput = document.getElementById('addon-modal-name');
+    const priceInput = document.getElementById('addon-modal-price');
+
+    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-pen-to-square" style="color: var(--color-rose-gold-dark);"></i> Edit Add-on Name';
+    if (docIdInput) docIdInput.value = docId;
+    if (nameInput) nameInput.value = addon.name || '';
+    if (priceInput) priceInput.value = addon.price || 10;
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeAddonModal() {
+    const modal = document.getElementById('addon-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function handleSaveAddonModal(e) {
+    e.preventDefault();
+
+    let docId = document.getElementById('addon-modal-docid')?.value;
+    const name = document.getElementById('addon-modal-name')?.value.trim();
+    const price = parseFloat(document.getElementById('addon-modal-price')?.value);
+
+    if (!name || isNaN(price) || price < 0) {
+        showToast('Please enter a valid add-on name and price.', 'warning');
+        return;
+    }
+
+    if (!docId) {
+        docId = 'addon_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + Date.now();
+    }
+
+    const btnSubmit = document.getElementById('btn-submit-addon-modal');
+    const origHtml = btnSubmit ? btnSubmit.innerHTML : 'Save Add-on';
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    }
+
+    const addonData = { name, price };
+
+    try {
+        await setDoc(doc(db, "addons", docId), addonData, { merge: true });
+
+        const idx = addonsList.findIndex(a => a.docId === docId);
+        if (idx !== -1) {
+            addonsList[idx] = { docId, ...addonData };
+        } else {
+            addonsList.push({ docId, ...addonData });
+        }
+
+        showToast(`✨ Add-on "${name}" saved successfully!`, 'success');
+        closeAddonModal();
+        renderAddonsPricingEditor();
+    } catch (err) {
+        console.error("Save addon modal error:", err);
+        showToast(`Failed to save add-on: ${err.message || 'Error'}`, 'error');
+    } finally {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = origHtml;
+        }
+    }
+}
+
+function deleteAddon(docId, addonName = 'this add-on') {
+    const confirmed = confirm(`Are you sure you want to delete "${addonName}" from your add-ons?`);
+    if (!confirmed) return;
+
+    deleteDoc(doc(db, "addons", docId))
+        .then(() => {
+            addonsList = addonsList.filter(a => a.docId !== docId);
+            renderAddonsPricingEditor();
+            showToast(`🗑️ Add-on "${addonName}" deleted.`, 'info');
+        })
+        .catch(err => {
+            console.error("Delete addon error:", err);
+            showToast(`Failed to delete add-on: ${err.message || 'Error'}`, 'error');
+        });
 }
 
 function saveSingleAddonPrice(docId, btnElement) {
@@ -1997,4 +2564,5 @@ function checkUrlScanCompletion() {
 initAdminQRScanner();
 renderServicesPricingEditor();
 renderAddonsPricingEditor();
+renderNailsGalleryManager();
 
