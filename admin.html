@@ -342,10 +342,45 @@
                     </div>
                 </div>
 
-                <!-- Save Button -->
-                <button class="btn btn-primary btn-save-all-prices" id="btn-save-prices">
+                <!-- Save Prices Button -->
+                <button class="btn btn-primary btn-save-all-prices" id="btn-save-prices" style="margin-bottom: 35px;">
                     <i class="fa-solid fa-floppy-disk"></i> Save All Prices
                 </button>
+
+                <!-- Section 4: Email Notifications (Resend API) -->
+                <div class="cms-section glass-panel" style="margin-top: 20px;">
+                    <h3><i class="fa-solid fa-envelope-circle-check"></i> Email Notifications (Resend API)</h3>
+                    <p class="cms-section-desc">Configure automated emails sent to clients and admin when appointments are booked, confirmed, or cancelled.</p>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="resend-api-key"><i class="fa-solid fa-key"></i> Resend API Key</label>
+                            <input type="password" id="resend-api-key" placeholder="re_123456789..." style="font-family: monospace;">
+                            <small style="color: var(--color-text-muted); font-size: 0.72rem; margin-top: 4px;">Get your API key at <a href="https://resend.com" target="_blank" style="color: var(--color-rose-gold-dark);">resend.com</a></small>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="resend-from-email"><i class="fa-solid fa-paper-plane"></i> Sender Address (From)</label>
+                            <input type="text" id="resend-from-email" placeholder="Ndi's Nail Bar <onboarding@resend.dev>">
+                            <small style="color: var(--color-text-muted); font-size: 0.72rem; margin-top: 4px;">Default: <code>onboarding@resend.dev</code> or your domain</small>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="resend-admin-email"><i class="fa-solid fa-user-shield"></i> Admin Alert Email</label>
+                            <input type="email" id="resend-admin-email" value="ndivhuwovele5@gmail.com" placeholder="ndivhuwovele5@gmail.com">
+                            <small style="color: var(--color-text-muted); font-size: 0.72rem; margin-top: 4px;">Receives new booking requests and status copies</small>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 22px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary" id="btn-test-resend-email" style="font-size: 0.85rem; padding: 10px 18px;">
+                            <i class="fa-solid fa-paper-plane"></i> Send Test Email
+                        </button>
+                        <button type="button" class="btn btn-primary" id="btn-save-email-settings" style="font-size: 0.85rem; padding: 10px 22px;">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Email Settings
+                        </button>
+                    </div>
+                </div>
             </div>
 
         </main>

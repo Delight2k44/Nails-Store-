@@ -15,6 +15,7 @@ import {
     orderBy, 
     Timestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { sendBookingCreatedEmails } from "./email-service.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
@@ -624,6 +625,19 @@ function initBookingWizard() {
 
                 // Initialize Slip Download button
                 initTicketDownloader(bookingId);
+
+                // Wire Track Appointment button on confirmation slip
+                const btnTrackTicket = document.getElementById('btn-track-ticket');
+                if (btnTrackTicket) {
+                    btnTrackTicket.onclick = () => {
+                        if (window.openTrackerForBooking) {
+                            window.openTrackerForBooking(bookingId);
+                        }
+                    };
+                }
+
+                // Dispatch confirmation emails via Resend to User & Admin
+                sendBookingCreatedEmails(bookingData).catch(e => console.warn("Resend email dispatch:", e));
             })
             .catch(err => {
                 console.error("Booking submit failed:", err);
@@ -946,32 +960,79 @@ function initReviewsSystem() {
 }
 
 /* ==========================================
-   5. REAL-TIME CLIENT APPOINTMENT TRACKER
+   5. REAL-TIME CLIENT APPOINTMENT TRACKER (MODAL POPUP)
    ========================================== */
 function initBookingTracker() {
+    const trackerModal = document.getElementById('tracker-modal');
+    const btnOpenTracker = document.getElementById('btn-open-tracker-modal');
+    const btnCloseTracker = document.getElementById('btn-close-tracker-modal');
+    const btnCloseTrackerBtn = document.getElementById('btn-close-tracker-modal-btn');
     const trackerForm = document.getElementById('tracker-form');
     const trackerInput = document.getElementById('tracker-input');
     const trackerResult = document.getElementById('tracker-result');
 
+    // Modal Open / Close handlers
+    function openTrackerModal(prefillId = '') {
+        if (!trackerModal) return;
+        trackerModal.style.display = 'flex';
+        if (trackerInput) {
+            if (prefillId) {
+                trackerInput.value = prefillId;
+                executeTrackerSearch(prefillId);
+            }
+            setTimeout(() => trackerInput.focus(), 150);
+        }
+    }
+
+    function closeTrackerModal() {
+        if (!trackerModal) return;
+        trackerModal.style.display = 'none';
+    }
+
+    if (btnOpenTracker) {
+        btnOpenTracker.addEventListener('click', () => openTrackerModal());
+    }
+    if (btnCloseTracker) {
+        btnCloseTracker.addEventListener('click', closeTrackerModal);
+    }
+    if (btnCloseTrackerBtn) {
+        btnCloseTrackerBtn.addEventListener('click', closeTrackerModal);
+    }
+    if (trackerModal) {
+        trackerModal.addEventListener('click', (e) => {
+            if (e.target === trackerModal) closeTrackerModal();
+        });
+    }
+
+    // Expose global helper for confirmation slip trigger
+    window.openTrackerForBooking = (bookingId) => {
+        openTrackerModal(bookingId);
+    };
+
     if (!trackerForm || !trackerInput || !trackerResult) return;
 
-    trackerForm.addEventListener('submit', async (e) => {
+    trackerForm.addEventListener('submit', (e) => {
         e.preventDefault();
-
         const queryVal = trackerInput.value.trim();
-        if (!queryVal) return;
+        if (queryVal) {
+            executeTrackerSearch(queryVal);
+        }
+    });
 
+    async function executeTrackerSearch(queryVal) {
         const btnSubmit = trackerForm.querySelector('button[type="submit"]');
-        const origText = btnSubmit.innerHTML;
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
+        const origText = btnSubmit ? btnSubmit.innerHTML : 'Check Status';
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
+        }
 
         trackerResult.style.display = 'block';
         trackerResult.innerHTML = '<div style="text-align:center; padding: 15px; color: var(--color-text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Checking live appointment status...</div>';
 
         try {
             // First search by Booking ID (e.g. NB-12345)
-            const idQuery = query(collection(db, "bookings"), where("id", "==", queryVal));
+            const idQuery = query(collection(db, "bookings"), where("id", "==", queryVal.toUpperCase()));
             let snapshot = await getDocs(idQuery);
 
             // If not found, try searching by Phone Number
@@ -982,10 +1043,10 @@ function initBookingTracker() {
 
             if (snapshot.empty) {
                 trackerResult.innerHTML = `
-                    <div style="text-align:center; padding: 10px;">
-                        <i class="fa-solid fa-circle-question" style="font-size: 1.8rem; color: var(--color-rose-gold-dark); margin-bottom: 8px;"></i>
-                        <h4 style="color: var(--color-text-dark); margin-bottom: 4px;">No Booking Found</h4>
-                        <p style="font-size: 0.8rem; color: var(--color-text-muted);">We couldn't find an appointment matching <strong>"${queryVal}"</strong>. Please check your Booking ID or contact us on WhatsApp.</p>
+                    <div style="text-align:center; padding: 15px 10px;">
+                        <i class="fa-solid fa-circle-question" style="font-size: 2rem; color: var(--color-rose-gold-dark); margin-bottom: 10px;"></i>
+                        <h4 style="color: var(--color-text-dark); margin-bottom: 6px;">No Booking Found</h4>
+                        <p style="font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.5;">We couldn't find an active booking matching <strong>"${queryVal}"</strong>. Please verify your reference number or message us on WhatsApp.</p>
                     </div>
                 `;
                 return;
@@ -997,9 +1058,9 @@ function initBookingTracker() {
 
             const b = bookings[0];
             const statusLabels = {
-                pending: { text: "Pending Approval ⏳", class: "pending" },
+                pending: { text: "Pending Studio Approval ⏳", class: "pending" },
                 confirmed: { text: "Approved & Confirmed 🎉", class: "confirmed" },
-                completed: { text: "Completed ✨", class: "completed" },
+                completed: { text: "Service Completed ✨", class: "completed" },
                 cancelled: { text: "Declined / Cancelled ❌", class: "cancelled" }
             };
             const statusInfo = statusLabels[b.status] || { text: b.status, class: "pending" };
@@ -1018,47 +1079,49 @@ function initBookingTracker() {
             trackerResult.innerHTML = `
                 <div class="tracker-result-header">
                     <div>
-                        <strong style="font-size: 1rem; color: var(--color-text-dark);">${b.clientName || 'Client'}</strong>
-                        <div style="font-size: 0.75rem; color: var(--color-text-muted); font-family: monospace;">Booking ID: ${b.id}</div>
+                        <strong style="font-size: 1.05rem; color: var(--color-text-dark);">${b.clientName || 'Valued Client'}</strong>
+                        <div style="font-size: 0.75rem; color: var(--color-text-muted); font-family: monospace; letter-spacing: 0.5px;">Booking ID: ${b.id}</div>
                     </div>
                     <span class="tracker-status-badge ${statusInfo.class}">${statusInfo.text}</span>
                 </div>
                 <div class="tracker-item-row">
-                    <span>Service:</span>
+                    <span>Primary Service:</span>
                     <strong>${b.service || '--'}</strong>
                 </div>
                 <div class="tracker-item-row">
-                    <span>Date & Time:</span>
+                    <span>Date & Time Slot:</span>
                     <strong>${b.date || '--'} @ ${b.time || '--'}</strong>
                 </div>
                 <div class="tracker-item-row">
                     <span>Estimated Total:</span>
-                    <strong style="color: var(--color-rose-gold-dark);">${priceFormatted}</strong>
+                    <strong style="color: var(--color-rose-gold-dark); font-size: 0.95rem;">${priceFormatted}</strong>
                 </div>
                 ${noteHTML}
                 
                 <!-- Client QR Pass for Check-in -->
-                <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed rgba(200, 143, 123, 0.3); text-align: center;">
+                <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed rgba(200, 143, 123, 0.3); text-align: center;">
                     <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted); letter-spacing: 0.5px; text-transform: uppercase; display: block; margin-bottom: 8px;">
-                        <i class="fa-solid fa-qrcode"></i> Your Check-in QR Code
+                        <i class="fa-solid fa-qrcode"></i> Check-in QR Code
                     </span>
                     <div style="background: #fff; display: inline-block; padding: 8px; border-radius: 8px; border: 1px solid rgba(220, 205, 195, 0.6); box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + 'admin.html?completeBooking=' + (b.id || ''))}&margin=3" alt="Booking QR Code" width="110" height="110" style="display:block; border-radius: 4px;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) + 'admin.html?completeBooking=' + (b.id || ''))}&margin=3" alt="Booking QR Code" width="120" height="120" style="display:block; border-radius: 4px;">
                     </div>
-                    <p style="font-size: 0.7rem; color: var(--color-text-muted); margin-top: 6px;">Show this to the studio upon completion of your service.</p>
+                    <p style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 6px;">Present this QR code slip upon arrival at the studio.</p>
                 </div>
             `;
         } catch (err) {
             console.error("Tracker search error:", err);
             trackerResult.innerHTML = `
-                <div style="text-align:center; padding: 10px; color: #e74c3c;">
+                <div style="text-align:center; padding: 12px; color: #e74c3c;">
                     <i class="fa-solid fa-circle-exclamation"></i> Error checking status. Please try again.
                 </div>
             `;
         } finally {
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = origText;
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origText;
+            }
         }
-    });
+    }
 }
 

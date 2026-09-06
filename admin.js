@@ -32,6 +32,12 @@ import {
     uploadBytesResumable, 
     getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { 
+    sendBookingStatusEmails, 
+    sendBookingCreatedEmails, 
+    getResendConfig, 
+    saveResendConfig 
+} from "./email-service.js";
 
 /* ==========================================
    TOAST NOTIFICATION SYSTEM
@@ -907,6 +913,11 @@ function updateBookingWithNotification(docId, newStatus, customNote = '', channe
         notificationChannel: channel || 'In-App'
     };
 
+    const targetBooking = allBookingsList.find(b => b.docId === docId) || currentNotifyBooking;
+    if (targetBooking && (newStatus === 'confirmed' || newStatus === 'cancelled')) {
+        sendBookingStatusEmails(targetBooking, newStatus, customNote).catch(e => console.warn("Resend email dispatch error:", e));
+    }
+
     return updateDoc(docRef, updateData)
         .then(() => {
             const statusLabels = {
@@ -915,7 +926,7 @@ function updateBookingWithNotification(docId, newStatus, customNote = '', channe
                 cancelled: 'declined & cancelled'
             };
             const channelMsg = channel && channel !== 'None (Status Only)' ? ` (WhatsApp notification opened)` : '';
-            showToast(`Booking ${statusLabels[newStatus] || 'updated'}${channelMsg}!`, 'success');
+            showToast(`Booking ${statusLabels[newStatus] || 'updated'}${channelMsg}! Email dispatched to client.`, 'success');
         })
         .catch(err => {
             console.error("Error updating booking status:", err);
@@ -945,6 +956,11 @@ function deleteBooking(docId, btnElement) {
 
 function updateBookingStatus(docId, newStatus, btnElement) {
     const docRef = doc(db, "bookings", docId);
+    const targetBooking = allBookingsList.find(b => b.docId === docId);
+    if (targetBooking && (newStatus === 'confirmed' || newStatus === 'cancelled')) {
+        sendBookingStatusEmails(targetBooking, newStatus).catch(e => console.warn("Resend email dispatch error:", e));
+    }
+
     updateDoc(docRef, { status: newStatus })
         .then(() => {
             const statusLabels = {
@@ -1239,6 +1255,80 @@ function initCMSBehaviors() {
     const savePricesBtn = document.getElementById('btn-save-prices');
     if (savePricesBtn) {
         savePricesBtn.addEventListener('click', saveAllPrices);
+    }
+
+    // --- Load Resend Email Configuration ---
+    getResendConfig().then(config => {
+        const apiKeyInput = document.getElementById('resend-api-key');
+        const fromEmailInput = document.getElementById('resend-from-email');
+        const adminEmailInput = document.getElementById('resend-admin-email');
+        if (apiKeyInput && config.apiKey) apiKeyInput.value = config.apiKey;
+        if (fromEmailInput && config.fromEmail) fromEmailInput.value = config.fromEmail;
+        if (adminEmailInput && config.adminEmail) adminEmailInput.value = config.adminEmail;
+    }).catch(err => console.warn("Email config load error:", err));
+
+    // --- Save Email Settings Button ---
+    const btnSaveEmailSettings = document.getElementById('btn-save-email-settings');
+    if (btnSaveEmailSettings) {
+        btnSaveEmailSettings.addEventListener('click', async () => {
+            const apiKey = document.getElementById('resend-api-key')?.value || '';
+            const fromEmail = document.getElementById('resend-from-email')?.value || '';
+            const adminEmail = document.getElementById('resend-admin-email')?.value || '';
+
+            const origHtml = btnSaveEmailSettings.innerHTML;
+            btnSaveEmailSettings.disabled = true;
+            btnSaveEmailSettings.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                await saveResendConfig({ apiKey, fromEmail, adminEmail });
+                showToast('Resend email settings saved successfully!', 'success');
+            } catch (e) {
+                console.error("Save email settings error:", e);
+                showToast('Failed to save email settings.', 'error');
+            } finally {
+                btnSaveEmailSettings.disabled = false;
+                btnSaveEmailSettings.innerHTML = origHtml;
+            }
+        });
+    }
+
+    // --- Test Email Button ---
+    const btnTestEmail = document.getElementById('btn-test-resend-email');
+    if (btnTestEmail) {
+        btnTestEmail.addEventListener('click', async () => {
+            const testTarget = prompt("Enter the email address to receive a test booking confirmation:", "ndivhuwovele5@gmail.com");
+            if (!testTarget || !testTarget.includes('@')) return;
+
+            const origHtml = btnTestEmail.innerHTML;
+            btnTestEmail.disabled = true;
+            btnTestEmail.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Test...';
+
+            try {
+                const testBooking = {
+                    id: "NB-TEST",
+                    clientName: "Test Guest",
+                    clientEmail: testTarget.trim(),
+                    clientPhone: "071 599 6931",
+                    service: "Gel Manicure",
+                    addons: ["Matte Top Coat"],
+                    date: "2026-09-10",
+                    time: "14:00",
+                    totalPrice: 50,
+                    notes: "This is a verification test from Ndi's Nail Bar."
+                };
+                const res = await sendBookingCreatedEmails(testBooking);
+                if (res.clientResult?.success || res.adminResult?.success) {
+                    showToast('Test email sent successfully via Resend!', 'success');
+                } else {
+                    showToast(res.clientResult?.message || 'Check your Resend API Key and try again.', 'info');
+                }
+            } catch (err) {
+                showToast(`Test failed: ${err.message || 'Error'}`, 'error');
+            } finally {
+                btnTestEmail.disabled = false;
+                btnTestEmail.innerHTML = origHtml;
+            }
+        });
     }
 }
 

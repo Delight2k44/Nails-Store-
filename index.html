@@ -236,6 +236,9 @@
             <span class="section-tagline">EASY RESERVATION</span>
             <h2 class="section-title">Book an Appointment</h2>
             <div class="section-divider"></div>
+            <button type="button" class="btn-tracker-trigger" id="btn-open-tracker-modal">
+                <i class="fa-solid fa-magnifying-glass"></i> Already have a booking? Track Appointment
+            </button>
         </div>
 
         <div class="booking-wrapper">
@@ -348,7 +351,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="client-phone">Phone Number</label>
-                                <input type="tel" id="client-phone" name="phone" placeholder="(123) 456-7890" required>
+                                <input type="tel" id="client-phone" name="phone" placeholder="071 599 6931" required>
                             </div>
                             <div class="form-group">
                                 <label for="client-notes">Special Requests / Notes</label>
@@ -434,30 +437,20 @@
                     </div>
 
                     <div class="ticket-actions" style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-track-ticket" id="btn-track-ticket" style="background: linear-gradient(135deg, #c88f7b, #b76e79); color: #fff; font-size: 0.85rem; padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(183, 110, 121, 0.35);">
+                            <i class="fa-solid fa-satellite-dish"></i> Track Live Status
+                        </button>
                         <button type="button" class="btn btn-download-ticket" id="btn-download-ticket">
                             <i class="fa-solid fa-download"></i> Download Slip
                         </button>
                         <a href="https://wa.me/27715996931" target="_blank" class="btn btn-primary" id="btn-ticket-whatsapp" style="background: linear-gradient(135deg, #25D366, #128C7E); font-size: 0.85rem; padding: 10px 18px;">
-                            <i class="fa-brands fa-whatsapp"></i> WhatsApp Us Your Ticket
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp Slip
                         </a>
                         <button type="button" class="btn btn-secondary btn-new-booking" id="btn-reset-booking" style="margin: 0; font-size: 0.85rem; padding: 10px 18px;">
                             Book Another Session
                         </button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Check Booking Status Card -->
-            <div class="booking-tracker-card glass-panel" style="margin-top: 30px;">
-                <div class="tracker-header">
-                    <h4><i class="fa-solid fa-magnifying-glass"></i> Track Your Appointment Status</h4>
-                    <p>Already booked? Enter your <strong>Booking ID</strong> (e.g. <code>NB-12345</code>) or <strong>Phone Number</strong> to check your live status.</p>
-                </div>
-                <form id="tracker-form" class="tracker-form">
-                    <input type="text" id="tracker-input" placeholder="e.g. NB-58291 or 071 599 6931" required>
-                    <button type="submit" class="btn btn-secondary btn-track">Check Status <i class="fa-solid fa-arrow-right"></i></button>
-                </form>
-                <div id="tracker-result" class="tracker-result" style="display: none;"></div>
             </div>
         </div>
     </section>
@@ -609,6 +602,39 @@
             <p>&copy; 2026 Ndi's Nail Bar. All Rights Reserved. Crafted with care for premium clients. | <a href="admin.html" style="text-decoration: underline; opacity: 0.6; transition: opacity 0.3s;">Admin Login</a></p>
         </div>
     </footer>
+
+    <!-- APPOINTMENT STATUS TRACKER MODAL (POPUPS ON DEMAND & AFTER BOOKING) -->
+    <div class="modal-backdrop" id="tracker-modal" style="display: none;">
+        <div class="modal-card glass-panel tracker-modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h3><i class="fa-solid fa-magnifying-glass" style="color: var(--color-rose-gold-dark);"></i> Track Appointment</h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Check your real-time booking confirmation, date, time, and check-in QR code.</p>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-tracker-modal" title="Close tracker">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="tracker-form" class="tracker-form-modal">
+                    <div class="tracker-input-row">
+                        <input type="text" id="tracker-input" placeholder="Enter Booking ID (e.g. NB-12345) or Phone Number" required autocomplete="off">
+                        <button type="submit" class="btn btn-primary btn-track" id="btn-track-submit">
+                            <i class="fa-solid fa-arrow-right"></i> Check Status
+                        </button>
+                    </div>
+                </form>
+
+                <div id="tracker-result" class="tracker-result" style="display: none;"></div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted);">
+                    <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Need help? <a href="https://wa.me/27715996931" target="_blank" style="color: var(--color-rose-gold-dark); font-weight: 600; text-decoration: none;">Chat on WhatsApp</a>
+                </span>
+                <button type="button" class="btn btn-secondary" id="btn-close-tracker-modal-btn">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Libraries for QR Code & Slip Download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>

@@ -2043,31 +2043,86 @@ textarea:focus {
     margin-bottom: 20px;
 }
 
-.tracker-form {
+.btn-tracker-trigger {
+    background: rgba(200, 143, 123, 0.12);
+    color: var(--color-rose-gold-dark);
+    border: 1px solid rgba(200, 143, 123, 0.35);
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+    font-family: inherit;
+}
+
+.btn-tracker-trigger:hover {
+    background: linear-gradient(135deg, var(--color-rose-gold), var(--color-rose-gold-dark));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 14px var(--color-rose-gold-glow);
+    transform: translateY(-2px);
+}
+
+/* Modal Tracker Popup Styles */
+.tracker-modal-card {
+    max-width: 540px !important;
+    width: 92% !important;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.tracker-modal-card .modal-header {
+    padding: 22px 25px 18px;
     display: flex;
-    max-width: 500px;
-    margin: 0 auto;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.tracker-modal-card .modal-body {
+    padding: 22px 25px;
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.tracker-modal-card .modal-footer {
+    padding: 15px 25px;
+    border-top: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.tracker-form-modal {
+    margin-bottom: 15px;
+}
+
+.tracker-input-row {
+    display: flex;
     gap: 10px;
     flex-wrap: wrap;
 }
 
-.tracker-form input {
+.tracker-input-row input {
     flex: 1;
     min-width: 220px;
     padding: 12px 16px;
     border-radius: 8px;
     border: 1px solid var(--glass-border);
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.85);
     font-size: 0.88rem;
     color: var(--color-text-dark);
     font-family: inherit;
     transition: all 0.2s ease;
 }
 
-.tracker-form input:focus {
+.tracker-input-row input:focus {
     outline: none;
     border-color: var(--color-rose-gold-dark);
-    background: rgba(255, 255, 255, 0.95);
+    background: #ffffff;
     box-shadow: 0 0 0 3px rgba(200, 143, 123, 0.2);
 }
 
@@ -2078,15 +2133,15 @@ textarea:focus {
 }
 
 .tracker-result {
-    max-width: 540px;
-    margin: 25px auto 0;
-    padding: 22px 25px;
-    background: rgba(255, 255, 255, 0.55);
+    margin-top: 18px;
+    padding: 20px 22px;
+    background: rgba(255, 255, 255, 0.75);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
     text-align: left;
     font-size: 0.88rem;
     animation: fadeIn 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
 }
 
 .tracker-result-header {
@@ -2135,8 +2190,8 @@ textarea:focus {
 .tracker-item-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 6px;
-    font-size: 0.83rem;
+    margin-bottom: 8px;
+    font-size: 0.84rem;
     color: var(--color-text-muted);
 }
 
@@ -2145,8 +2200,8 @@ textarea:focus {
 }
 
 .tracker-note-box {
-    margin-top: 12px;
-    padding: 10px 14px;
+    margin-top: 14px;
+    padding: 12px 14px;
     background: rgba(200, 143, 123, 0.1);
     border-left: 3px solid var(--color-rose-gold-dark);
     border-radius: 4px;
