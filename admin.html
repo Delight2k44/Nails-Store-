@@ -694,6 +694,57 @@
         </div>
     </div>
 
+    <!-- DELETE BOOKING CONFIRMATION MODAL -->
+    <div class="modal-backdrop" id="delete-booking-modal" style="display: none;">
+        <div class="modal-card glass-panel" style="max-width: 490px; text-align: left;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(231, 76, 60, 0.18);">
+                <div class="modal-title-group">
+                    <h3 style="color: #c0392b;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #e74c3c;"></i> 
+                        <span>Delete Booking</span>
+                    </h3>
+                    <div class="modal-status-pill cancelled">
+                        <span class="status-indicator"></span>
+                        <span>Permanent Action</span>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-delete-modal" title="Close modal">&times;</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 12px 0 6px;">
+                <p style="font-size: 0.9rem; color: var(--color-text-dark); margin-bottom: 16px; line-height: 1.5;">
+                    Are you sure you want to permanently delete this booking? This will remove all customer reservation data and cannot be undone.
+                </p>
+
+                <div class="notify-client-badge" id="delete-modal-client-badge" style="margin-bottom: 16px; background: rgba(244, 67, 54, 0.06); border: 1px solid rgba(244, 67, 54, 0.2);">
+                    <div class="badge-avatar" id="delete-modal-avatar" style="background: linear-gradient(135deg, #e74c3c, #c0392b); box-shadow: 0 4px 10px rgba(231, 76, 60, 0.25);">D</div>
+                    <div class="badge-details">
+                        <div class="badge-name-row">
+                            <h4 id="delete-modal-client-name">Delight Tshitangano</h4>
+                            <span class="booking-id-chip" id="delete-modal-id-chip" style="font-size: 0.75rem; font-weight: 700; background: rgba(30, 22, 19, 0.08); padding: 2px 8px; border-radius: 4px; font-family: monospace;">NB-86968</span>
+                        </div>
+                        <p id="delete-modal-client-meta" style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 2px;">
+                            <i class="fa-solid fa-tag"></i> <span id="delete-modal-service">Gel Manicure</span> &nbsp;|&nbsp; 
+                            <i class="fa-regular fa-calendar"></i> <span id="delete-modal-date">2026-09-08</span> &nbsp;|&nbsp; 
+                            <span class="accent-text" style="font-weight: 700;" id="delete-modal-price">R45.00</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: rgba(231, 76, 60, 0.08); border-left: 3px solid #e74c3c; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.8rem; color: #c0392b; line-height: 1.4;">
+                    <i class="fa-solid fa-circle-exclamation"></i> <strong>Warning:</strong> Any pending WhatsApp links, email notifications, or QR codes for this booking will be permanently invalidated.
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--glass-border);">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-delete-modal">Cancel</button>
+                <button type="button" class="btn btn-danger-action" id="btn-confirm-delete-booking">
+                    <i class="fa-solid fa-trash-can"></i> <span>Permanently Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- HTML5 QR Code Scanner Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 

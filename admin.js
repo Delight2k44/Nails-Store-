@@ -687,11 +687,7 @@ function renderBookingsTable() {
                     const targetAction = bookingData.status === 'cancelled' ? 'cancelled' : 'confirmed';
                     openBookingNotifyModal(bookingData, targetAction);
                 } else if (btn.classList.contains('delete')) {
-                    const clientName = bookingData.clientName || 'this client';
-                    const displayId = bookingData.id || docId.substring(0, 8);
-                    if (confirm(`Are you sure you want to permanently delete booking ${displayId} for ${clientName}? This cannot be undone.`)) {
-                        deleteBooking(docId, btn);
-                    }
+                    openDeleteBookingModal(bookingData, btn);
                 }
             });
         });
@@ -1032,24 +1028,78 @@ function updateBookingWithNotification(docId, newStatus, customNote = '', channe
         });
 }
 
-function deleteBooking(docId, btnElement) {
-    if (btnElement) {
-        btnElement.disabled = true;
-        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    }
-    const docRef = doc(db, "bookings", docId);
-    deleteDoc(docRef)
-        .then(() => {
-            showToast('Booking deleted permanently.', 'info');
-        })
-        .catch(err => {
+let pendingDeleteDocId = null;
+let pendingDeleteBtn = null;
+
+function openDeleteBookingModal(bookingData, btnElement) {
+    pendingDeleteDocId = bookingData.docId;
+    pendingDeleteBtn = btnElement;
+
+    const modal = document.getElementById('delete-booking-modal');
+    const avatar = document.getElementById('delete-modal-avatar');
+    const nameEl = document.getElementById('delete-modal-client-name');
+    const idChip = document.getElementById('delete-modal-id-chip');
+    const serviceEl = document.getElementById('delete-modal-service');
+    const dateEl = document.getElementById('delete-modal-date');
+    const priceEl = document.getElementById('delete-modal-price');
+
+    const clientName = bookingData.clientName || 'Client';
+    const displayId = bookingData.id || bookingData.docId.substring(0, 8);
+
+    if (nameEl) nameEl.innerText = clientName;
+    if (avatar) avatar.innerText = clientName.charAt(0).toUpperCase() || 'C';
+    if (idChip) idChip.innerText = displayId;
+    if (serviceEl) serviceEl.innerText = bookingData.service || 'Service';
+    if (dateEl) dateEl.innerText = `${bookingData.date || '--'} ${bookingData.time ? `(${bookingData.time})` : ''}`;
+    if (priceEl) priceEl.innerText = bookingData.totalPrice ? `R${parseFloat(bookingData.totalPrice).toFixed(2)}` : 'R0.00';
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeDeleteBookingModal() {
+    const modal = document.getElementById('delete-booking-modal');
+    if (modal) modal.style.display = 'none';
+    pendingDeleteDocId = null;
+    pendingDeleteBtn = null;
+}
+
+// Delete Booking Modal Event Listeners
+const btnConfirmDelete = document.getElementById('btn-confirm-delete-booking');
+const btnCloseDelete = document.getElementById('btn-close-delete-modal');
+const btnCancelDelete = document.getElementById('btn-cancel-delete-modal');
+const deleteBookingModal = document.getElementById('delete-booking-modal');
+
+if (btnCloseDelete) btnCloseDelete.addEventListener('click', closeDeleteBookingModal);
+if (btnCancelDelete) btnCancelDelete.addEventListener('click', closeDeleteBookingModal);
+if (deleteBookingModal) {
+    deleteBookingModal.addEventListener('click', (e) => {
+        if (e.target === deleteBookingModal) closeDeleteBookingModal();
+    });
+}
+if (btnConfirmDelete) {
+    btnConfirmDelete.addEventListener('click', async () => {
+        if (!pendingDeleteDocId) return;
+
+        const origHtml = btnConfirmDelete.innerHTML;
+        btnConfirmDelete.disabled = true;
+        btnConfirmDelete.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+
+        try {
+            const targetBooking = allBookingsList.find(b => b.docId === pendingDeleteDocId);
+            const clientName = targetBooking ? targetBooking.clientName : 'Booking';
+            const displayId = targetBooking ? (targetBooking.id || pendingDeleteDocId.substring(0, 8)) : '';
+
+            await deleteDoc(doc(db, "bookings", pendingDeleteDocId));
+            showToast(`🗑️ Booking ${displayId} for ${clientName} permanently deleted.`, 'info');
+            closeDeleteBookingModal();
+        } catch (err) {
             console.error("Delete booking error:", err);
-            showToast(`Failed to delete booking. ${err.message || 'Please try again.'}`, 'error');
-            if (btnElement) {
-                btnElement.disabled = false;
-                btnElement.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
-            }
-        });
+            showToast(`Failed to delete booking: ${err.message || 'Error'}`, 'error');
+        } finally {
+            btnConfirmDelete.disabled = false;
+            btnConfirmDelete.innerHTML = origHtml;
+        }
+    });
 }
 
 function updateBookingStatus(docId, newStatus, btnElement) {
