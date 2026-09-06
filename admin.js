@@ -1257,13 +1257,15 @@ function initCMSBehaviors() {
         savePricesBtn.addEventListener('click', saveAllPrices);
     }
 
-    // --- Load Resend Email Configuration ---
+    // --- Load Email Configuration ---
     getResendConfig().then(config => {
-        const apiKeyInput = document.getElementById('resend-api-key');
-        const fromEmailInput = document.getElementById('resend-from-email');
+        const serviceInput = document.getElementById('emailjs-service-id');
+        const templateInput = document.getElementById('emailjs-template-id');
+        const publicInput = document.getElementById('emailjs-public-key');
         const adminEmailInput = document.getElementById('resend-admin-email');
-        if (apiKeyInput && config.apiKey) apiKeyInput.value = config.apiKey;
-        if (fromEmailInput && config.fromEmail) fromEmailInput.value = config.fromEmail;
+        if (serviceInput && config.serviceId) serviceInput.value = config.serviceId;
+        if (templateInput && config.templateId) templateInput.value = config.templateId;
+        if (publicInput && config.publicKey) publicInput.value = config.publicKey;
         if (adminEmailInput && config.adminEmail) adminEmailInput.value = config.adminEmail;
     }).catch(err => console.warn("Email config load error:", err));
 
@@ -1271,8 +1273,9 @@ function initCMSBehaviors() {
     const btnSaveEmailSettings = document.getElementById('btn-save-email-settings');
     if (btnSaveEmailSettings) {
         btnSaveEmailSettings.addEventListener('click', async () => {
-            const apiKey = document.getElementById('resend-api-key')?.value || '';
-            const fromEmail = document.getElementById('resend-from-email')?.value || '';
+            const serviceId = document.getElementById('emailjs-service-id')?.value || '';
+            const templateId = document.getElementById('emailjs-template-id')?.value || '';
+            const publicKey = document.getElementById('emailjs-public-key')?.value || '';
             const adminEmail = document.getElementById('resend-admin-email')?.value || '';
 
             const origHtml = btnSaveEmailSettings.innerHTML;
@@ -1280,8 +1283,8 @@ function initCMSBehaviors() {
             btnSaveEmailSettings.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
             try {
-                await saveResendConfig({ apiKey, fromEmail, adminEmail });
-                showToast('Resend email settings saved successfully!', 'success');
+                await saveResendConfig({ serviceId, templateId, publicKey, adminEmail });
+                showToast('Email notification settings saved successfully!', 'success');
             } catch (e) {
                 console.error("Save email settings error:", e);
                 showToast('Failed to save email settings.', 'error');
@@ -1314,13 +1317,13 @@ function initCMSBehaviors() {
                     date: "2026-09-10",
                     time: "14:00",
                     totalPrice: 50,
-                    notes: "This is a verification test from Ndi's Nail Bar."
+                    notes: "This is a live test from Ndi's Nail Bar dashboard."
                 };
                 const res = await sendBookingCreatedEmails(testBooking);
                 if (res.clientResult?.success || res.adminResult?.success) {
-                    showToast('Test email sent successfully via Resend!', 'success');
+                    showToast(`✨ Test email delivered to ${testTarget.trim()} successfully!`, 'success');
                 } else {
-                    showToast(res.clientResult?.message || 'Check your Resend API Key and try again.', 'info');
+                    showToast(res.clientResult?.error || 'Could not send test email. Please verify credentials.', 'error');
                 }
             } catch (err) {
                 showToast(`Test failed: ${err.message || 'Error'}`, 'error');
