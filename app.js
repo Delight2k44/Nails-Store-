@@ -974,6 +974,7 @@ function initBookingTracker() {
     // Modal Open / Close handlers
     function openTrackerModal(prefillId = '') {
         if (!trackerModal) return;
+        trackerModal.classList.add('active');
         trackerModal.style.display = 'flex';
         if (trackerInput) {
             if (prefillId) {
@@ -986,6 +987,7 @@ function initBookingTracker() {
 
     function closeTrackerModal() {
         if (!trackerModal) return;
+        trackerModal.classList.remove('active');
         trackerModal.style.display = 'none';
     }
 
