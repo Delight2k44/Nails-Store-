@@ -276,22 +276,33 @@ function initPortfolioFilter() {
         });
     });
 
-    const nailsQuery = query(collection(db, "nails"), orderBy("createdAt", "desc"));
-    onSnapshot(nailsQuery, (snapshot) => {
-        let nails = [];
-        snapshot.forEach(docSnap => {
-            nails.push(docSnap.data());
+    try {
+        const nailsQuery = collection(db, "nails");
+        onSnapshot(nailsQuery, (snapshot) => {
+            let nails = [];
+            snapshot.forEach(docSnap => {
+                nails.push({ docId: docSnap.id, ...docSnap.data() });
+            });
+
+            if (nails.length === 0) {
+                nails = defaultNails;
+            } else {
+                nails.sort((a, b) => {
+                    const timeA = a.createdAt?.seconds || 0;
+                    const timeB = b.createdAt?.seconds || 0;
+                    return timeB - timeA;
+                });
+            }
+
+            renderPortfolioGrid(nails);
+        }, (err) => {
+            console.warn("Nails fetch error: falling back to defaults.", err);
+            renderPortfolioGrid(defaultNails);
         });
-
-        if (nails.length === 0) {
-            nails = defaultNails;
-        }
-
-        renderPortfolioGrid(nails);
-    }, (err) => {
-        console.warn("Nails fetch error: falling back to defaults.", err);
+    } catch (err) {
+        console.warn("Nails snapshot init error:", err);
         renderPortfolioGrid(defaultNails);
-    });
+    }
 }
 
 function renderPortfolioGrid(nails) {

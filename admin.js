@@ -88,7 +88,7 @@ let unsubServices = null;
 let unsubAddons = null;
 let unsubLayout = null;
 
-// Default Services and Addons Constants
+// Default Services, Addons, and Portfolio Designs Constants
 const DEFAULT_SERVICES = [
     { docId: "service_gel_manicure", name: "Gel Manicure", category: "MANICURE", description: "Long-lasting gel polish with cuticles refinement, shaping, buffing, and luxury rose cuticle oil massage.", price: 45, duration: 45, order: 1 },
     { docId: "service_acrylic_full_set", name: "Acrylic Full Set", category: "EXTENSIONS", description: "Full set acrylic extensions with precision tip application, sculpting, and bespoke high-gloss gel finish.", price: 65, duration: 60, order: 2 },
@@ -103,10 +103,41 @@ const DEFAULT_ADDONS = [
     { docId: "addon_nail_repair", name: "Nail Repair (Single)", price: 8 }
 ];
 
+const DEFAULT_NAILS = [
+    {
+        docId: "nail_acrylic_foil",
+        title: "Sculpted Rose Gold Foil",
+        category: "acrylic",
+        imageUrl: "assets/acrylic.jpg",
+        createdAt: Timestamp.fromDate(new Date("2025-01-01T10:00:00Z"))
+    },
+    {
+        docId: "nail_gel_ombre",
+        title: "Lavender & Blush Ombré",
+        category: "gel",
+        imageUrl: "assets/gel.jpg",
+        createdAt: Timestamp.fromDate(new Date("2025-01-02T10:00:00Z"))
+    },
+    {
+        docId: "nail_chrome_shimmer",
+        title: "Glossy Rose Gold Shimmer",
+        category: "chrome",
+        imageUrl: "assets/chrome.jpg",
+        createdAt: Timestamp.fromDate(new Date("2025-01-03T10:00:00Z"))
+    },
+    {
+        docId: "nail_art_floral",
+        title: "White Lace Floral Details",
+        category: "art",
+        imageUrl: "assets/art.jpg",
+        createdAt: Timestamp.fromDate(new Date("2025-01-04T10:00:00Z"))
+    }
+];
+
 // Global Lists for stats calculation
 let allBookingsList = [];
 let approvedReviewsList = [];
-let nailsList = [];
+let nailsList = [...DEFAULT_NAILS];
 let servicesList = [...DEFAULT_SERVICES];
 let addonsList = [...DEFAULT_ADDONS];
 
@@ -376,23 +407,36 @@ function initDashboardData() {
     try {
         const nailsQuery = collection(db, "nails");
         unsubNails = onSnapshot(nailsQuery, (snapshot) => {
-            nailsList = [];
-            snapshot.forEach(docSnap => {
-                nailsList.push({ docId: docSnap.id, ...docSnap.data() });
-            });
-            // Sort by createdAt desc locally
-            nailsList.sort((a, b) => {
-                const timeA = a.createdAt?.seconds || 0;
-                const timeB = b.createdAt?.seconds || 0;
-                return timeB - timeA;
-            });
+            if (snapshot.empty) {
+                // If collection is empty, auto-seed defaults with deterministic IDs
+                nailsList = [...DEFAULT_NAILS];
+                DEFAULT_NAILS.forEach(n => {
+                    const { docId, ...data } = n;
+                    setDoc(doc(db, "nails", docId), data, { merge: true }).catch(err => console.warn("Auto-seed nail error:", err));
+                });
+            } else {
+                nailsList = [];
+                snapshot.forEach(docSnap => {
+                    nailsList.push({ docId: docSnap.id, ...docSnap.data() });
+                });
+                // Sort by createdAt desc locally
+                nailsList.sort((a, b) => {
+                    const timeA = a.createdAt?.seconds || 0;
+                    const timeB = b.createdAt?.seconds || 0;
+                    return timeB - timeA;
+                });
+            }
             updateStats();
             renderNailsGalleryManager();
         }, (err) => {
-            console.error("Nails list stream error:", err);
+            console.error("Nails list stream error (using defaults):", err);
+            nailsList = [...DEFAULT_NAILS];
+            renderNailsGalleryManager();
         });
     } catch (err) {
         console.error("Nails init error:", err);
+        nailsList = [...DEFAULT_NAILS];
+        renderNailsGalleryManager();
     }
 
     // 5. Real-time Services Watcher (CMS)
@@ -1286,6 +1330,42 @@ function initUploaderBehaviors() {
     if (editNailForm) {
         editNailForm.addEventListener('submit', handleSaveNailEdit);
     }
+
+    // Seed / Reset Default Gallery Designs Button
+    const btnSeedNails = document.getElementById('btn-seed-default-nails');
+    if (btnSeedNails) {
+        btnSeedNails.addEventListener('click', async () => {
+            const confirmed = confirm("Reset the portfolio gallery to the 4 default designs (Gel, Acrylic, Chrome, Nail Art)?");
+            if (!confirmed) return;
+
+            const origHtml = btnSeedNails.innerHTML;
+            btnSeedNails.disabled = true;
+            btnSeedNails.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Resetting...';
+
+            try {
+                await seedDefaultNails(true);
+                showToast('✨ Default nail gallery designs restored!', 'success');
+            } catch (err) {
+                console.error("Reset nails error:", err);
+                showToast('Failed to reset gallery. Please try again.', 'error');
+            } finally {
+                btnSeedNails.disabled = false;
+                btnSeedNails.innerHTML = origHtml;
+            }
+        });
+    }
+}
+
+async function seedDefaultNails(force = false) {
+    const promises = [];
+    DEFAULT_NAILS.forEach(nail => {
+        const { docId, ...data } = nail;
+        promises.push(setDoc(doc(db, "nails", docId), data, { merge: true }));
+    });
+    await Promise.all(promises);
+    nailsList = [...DEFAULT_NAILS];
+    updateStats();
+    renderNailsGalleryManager();
 }
 
 function renderNailsGalleryManager() {
@@ -2560,9 +2640,12 @@ function checkUrlScanCompletion() {
     }
 }
 
-// Wire QR Scanner and CMS Editors during initialization
+// Wire QR Scanner, Uploader, and CMS Editors during initialization
 initAdminQRScanner();
+initUploaderBehaviors();
+initCMSBehaviors();
 renderServicesPricingEditor();
 renderAddonsPricingEditor();
 renderNailsGalleryManager();
+checkUrlScanCompletion();
 

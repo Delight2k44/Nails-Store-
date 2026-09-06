@@ -251,13 +251,13 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="nail-category">Gallery Category</label>
+                            <label for="nail-category">Gallery Category / Section</label>
                             <select id="nail-category" required>
-                                <option value="" disabled selected>-- Choose Category --</option>
-                                <option value="gel">Gel Manicure</option>
-                                <option value="acrylic">Acrylic Extensions</option>
-                                <option value="chrome">Glazed Chrome</option>
-                                <option value="art">Custom Nail Art</option>
+                                <option value="" disabled selected>-- Choose Gallery Section --</option>
+                                <option value="gel">Gel (Gel Manicure)</option>
+                                <option value="acrylic">Acrylic (Acrylic Extensions)</option>
+                                <option value="chrome">Chrome (Glazed Chrome)</option>
+                                <option value="art">Nail Art (Custom Nail Art)</option>
                             </select>
                         </div>
                         
@@ -286,9 +286,12 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
                         <div>
                             <h3 style="font-size: 1.4rem; margin-bottom: 4px;"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--color-rose-gold-dark);"></i> Manage Portfolio Gallery</h3>
-                            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; font-weight: 300;">Edit design titles, change style categories, or delete designs from the website gallery.</p>
+                            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; font-weight: 300;">Edit design titles, change style sections, replace images, or delete designs from the website gallery.</p>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn btn-secondary" id="btn-seed-default-nails" style="font-size: 0.8rem; padding: 7px 14px;">
+                                <i class="fa-solid fa-arrows-rotate"></i> Reset Defaults
+                            </button>
                             <span class="badge-count" id="admin-gallery-count-badge">0 designs</span>
                         </div>
                     </div>
@@ -296,10 +299,10 @@
                     <!-- Category Filter Buttons for Admin Gallery -->
                     <div class="admin-filter-bar" style="display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap;">
                         <button type="button" class="admin-filter-chip active" data-category="all">All Designs</button>
-                        <button type="button" class="admin-filter-chip" data-category="gel">Gel Manicure</button>
+                        <button type="button" class="admin-filter-chip" data-category="gel">Gel</button>
                         <button type="button" class="admin-filter-chip" data-category="acrylic">Acrylic</button>
-                        <button type="button" class="admin-filter-chip" data-category="chrome">Glazed Chrome</button>
-                        <button type="button" class="admin-filter-chip" data-category="art">Custom Art</button>
+                        <button type="button" class="admin-filter-chip" data-category="chrome">Chrome</button>
+                        <button type="button" class="admin-filter-chip" data-category="art">Nail Art</button>
                     </div>
 
                     <!-- Gallery Designs Grid -->
@@ -573,12 +576,12 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="edit-nail-category">Gallery Category</label>
+                        <label for="edit-nail-category">Gallery Category / Section</label>
                         <select id="edit-nail-category" required>
-                            <option value="gel">Gel Manicure</option>
-                            <option value="acrylic">Acrylic Extensions</option>
-                            <option value="chrome">Glazed Chrome</option>
-                            <option value="art">Custom Nail Art</option>
+                            <option value="gel">Gel (Gel Manicure)</option>
+                            <option value="acrylic">Acrylic (Acrylic Extensions)</option>
+                            <option value="chrome">Chrome (Glazed Chrome)</option>
+                            <option value="art">Nail Art (Custom Nail Art)</option>
                         </select>
                     </div>
 
