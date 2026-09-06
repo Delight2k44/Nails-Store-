@@ -88,12 +88,27 @@ let unsubServices = null;
 let unsubAddons = null;
 let unsubLayout = null;
 
+// Default Services and Addons Constants
+const DEFAULT_SERVICES = [
+    { docId: "service_gel_manicure", name: "Gel Manicure", category: "MANICURE", description: "Long-lasting gel polish with cuticles refinement, shaping, buffing, and luxury rose cuticle oil massage.", price: 45, duration: 45, order: 1 },
+    { docId: "service_acrylic_full_set", name: "Acrylic Full Set", category: "EXTENSIONS", description: "Full set acrylic extensions with precision tip application, sculpting, and bespoke high-gloss gel finish.", price: 65, duration: 60, order: 2 },
+    { docId: "service_glazed_chrome", name: "Glazed Chrome Gel", category: "SPECIALTY", description: "The signature shimmering chrome finish on a base of your choice. Clean, reflective, and highly fashionable glazed look.", price: 55, duration: 50, order: 3 },
+    { docId: "service_custom_art", name: "Custom Nail Art Set", category: "DESIGN", description: "Bespoke hand-painted nail designs, fine floral line-work, custom patterns, or layered glitter detailing tailored to your theme.", price: 75, duration: 75, order: 4 }
+];
+
+const DEFAULT_ADDONS = [
+    { docId: "addon_matte_top_coat", name: "Matte Top Coat", price: 5 },
+    { docId: "addon_paraffin_treatment", name: "Paraffin Treatment", price: 15 },
+    { docId: "addon_rhinestones", name: "Rhinestone Studs (x10)", price: 10 },
+    { docId: "addon_nail_repair", name: "Nail Repair (Single)", price: 8 }
+];
+
 // Global Lists for stats calculation
 let allBookingsList = [];
 let approvedReviewsList = [];
 let nailsList = [];
-let servicesList = [];
-let addonsList = [];
+let servicesList = [...DEFAULT_SERVICES];
+let addonsList = [...DEFAULT_ADDONS];
 
 // DOM Elements
 const loginContainer = document.getElementById('login-container');
@@ -286,6 +301,11 @@ menuItems.forEach(item => {
             tabHeading.innerText = tabMeta[tabName].title;
             tabDescription.innerText = tabMeta[tabName].desc;
         }
+
+        if (tabName === 'settings') {
+            renderServicesPricingEditor();
+            renderAddonsPricingEditor();
+        }
     });
 });
 
@@ -370,34 +390,59 @@ function initDashboardData() {
     try {
         const servicesQuery = collection(db, "services");
         unsubServices = onSnapshot(servicesQuery, (snapshot) => {
-            servicesList = [];
-            snapshot.forEach(docSnap => {
-                servicesList.push({ docId: docSnap.id, ...docSnap.data() });
-            });
-            // Sort locally by order or name
-            servicesList.sort((a, b) => (a.order || 99) - (b.order || 99));
+            if (snapshot.empty) {
+                // If collection is empty, auto-seed defaults with deterministic IDs
+                servicesList = [...DEFAULT_SERVICES];
+                DEFAULT_SERVICES.forEach(s => {
+                    const { docId, ...data } = s;
+                    setDoc(doc(db, "services", docId), data, { merge: true }).catch(err => console.warn("Auto-seed service error:", err));
+                });
+            } else {
+                servicesList = [];
+                snapshot.forEach(docSnap => {
+                    servicesList.push({ docId: docSnap.id, ...docSnap.data() });
+                });
+                // Sort locally by order or name
+                servicesList.sort((a, b) => (a.order || 99) - (b.order || 99));
+            }
             renderServicesPricingEditor();
         }, (err) => {
-            console.error("Services stream error:", err);
+            console.error("Services stream error (using defaults):", err);
+            servicesList = [...DEFAULT_SERVICES];
+            renderServicesPricingEditor();
         });
     } catch (err) {
         console.error("Services init error:", err);
+        servicesList = [...DEFAULT_SERVICES];
+        renderServicesPricingEditor();
     }
 
     // 6. Real-time Addons Watcher (CMS)
     try {
         const addonsQuery = collection(db, "addons");
         unsubAddons = onSnapshot(addonsQuery, (snapshot) => {
-            addonsList = [];
-            snapshot.forEach(docSnap => {
-                addonsList.push({ docId: docSnap.id, ...docSnap.data() });
-            });
+            if (snapshot.empty) {
+                addonsList = [...DEFAULT_ADDONS];
+                DEFAULT_ADDONS.forEach(a => {
+                    const { docId, ...data } = a;
+                    setDoc(doc(db, "addons", docId), data, { merge: true }).catch(err => console.warn("Auto-seed addon error:", err));
+                });
+            } else {
+                addonsList = [];
+                snapshot.forEach(docSnap => {
+                    addonsList.push({ docId: docSnap.id, ...docSnap.data() });
+                });
+            }
             renderAddonsPricingEditor();
         }, (err) => {
-            console.error("Addons stream error:", err);
+            console.error("Addons stream error (using defaults):", err);
+            addonsList = [...DEFAULT_ADDONS];
+            renderAddonsPricingEditor();
         });
     } catch (err) {
         console.error("Addons init error:", err);
+        addonsList = [...DEFAULT_ADDONS];
+        renderAddonsPricingEditor();
     }
 
     // 7. Layout Settings Watcher (CMS)
@@ -1190,38 +1235,36 @@ function initUploaderBehaviors() {
    CMS: PRICING EDITOR & LAYOUT IMAGE MANAGER
    ========================================== */
 
+async function seedDefaultServicesAndAddons(force = false) {
+    const promises = [];
+    DEFAULT_SERVICES.forEach(service => {
+        const { docId, ...data } = service;
+        promises.push(setDoc(doc(db, "services", docId), data, { merge: true }));
+    });
+    DEFAULT_ADDONS.forEach(addon => {
+        const { docId, ...data } = addon;
+        promises.push(setDoc(doc(db, "addons", docId), data, { merge: true }));
+    });
+    await Promise.all(promises);
+    servicesList = [...DEFAULT_SERVICES];
+    addonsList = [...DEFAULT_ADDONS];
+    renderServicesPricingEditor();
+    renderAddonsPricingEditor();
+}
+
 function initCMSBehaviors() {
-    // --- Seed Default Services if Collection is Empty ---
+    // Initial immediate render so inputs are populated instantly
+    renderServicesPricingEditor();
+    renderAddonsPricingEditor();
+
+    // Check & auto-seed services if DB is completely empty
     getDocs(collection(db, "services")).then(snapshot => {
         if (snapshot.empty) {
-            const defaultServices = [
-                { name: "Gel Manicure", category: "MANICURE", description: "Long-lasting, chip-resistant gel polish cured under LED light. Includes cuticle care, shaping, and hydrating massage.", price: 45, duration: 45, order: 1 },
-                { name: "Acrylic Full Set", category: "EXTENSIONS", description: "Full set of sculpted premium acrylic extensions with length extension, shape of your choice, and solid gel color.", price: 65, duration: 60, order: 2 },
-                { name: "Glazed Chrome Gel", category: "SPECIALTY", description: "The signature shimmering chrome finish on a base of your choice. Clean, reflective, and highly fashionable glazed look.", price: 55, duration: 50, order: 3 },
-                { name: "Custom Nail Art Set", category: "DESIGN", description: "Bespoke hand-painted nail designs, fine floral line-work, custom patterns, or layered glitter detailing tailored to your theme.", price: 75, duration: 75, order: 4 }
-            ];
-            defaultServices.forEach(service => {
-                addDoc(collection(db, "services"), service).catch(err => console.error("Seed service error:", err));
-            });
-            showToast('Default services loaded into database.', 'info');
+            seedDefaultServicesAndAddons().then(() => {
+                showToast('✨ Default services loaded into database.', 'info');
+            }).catch(err => console.warn("Seed error:", err));
         }
-    }).catch(err => console.error("Services check error:", err));
-
-    // --- Seed Default Addons if Collection is Empty ---
-    getDocs(collection(db, "addons")).then(snapshot => {
-        if (snapshot.empty) {
-            const defaultAddons = [
-                { name: "Matte Top Coat", price: 5 },
-                { name: "Paraffin Treatment", price: 15 },
-                { name: "Rhinestone Studs (x10)", price: 10 },
-                { name: "Nail Repair (Single)", price: 8 }
-            ];
-            defaultAddons.forEach(addon => {
-                addDoc(collection(db, "addons"), addon).catch(err => console.error("Seed addon error:", err));
-            });
-            showToast('Default add-ons loaded into database.', 'info');
-        }
-    }).catch(err => console.error("Addons check error:", err));
+    }).catch(err => console.warn("Services check error:", err));
 
     // --- Hero Image Upload ---
     const heroInput = document.getElementById('hero-image-input');
@@ -1255,6 +1298,30 @@ function initCMSBehaviors() {
     const savePricesBtn = document.getElementById('btn-save-prices');
     if (savePricesBtn) {
         savePricesBtn.addEventListener('click', saveAllPrices);
+    }
+
+    // --- Seed / Reset Default Prices Button ---
+    const btnSeedPrices = document.getElementById('btn-seed-default-prices');
+    if (btnSeedPrices) {
+        btnSeedPrices.addEventListener('click', async () => {
+            const confirmed = confirm("Reset all service and add-on prices to studio defaults (Gel R45, Acrylic R65, Chrome R55, Art R75)?");
+            if (!confirmed) return;
+
+            const origHtml = btnSeedPrices.innerHTML;
+            btnSeedPrices.disabled = true;
+            btnSeedPrices.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Resetting...';
+
+            try {
+                await seedDefaultServicesAndAddons(true);
+                showToast('✨ Default services and add-ons loaded successfully!', 'success');
+            } catch (err) {
+                console.error("Reset prices error:", err);
+                showToast('Failed to reset prices. Please try again.', 'error');
+            } finally {
+                btnSeedPrices.disabled = false;
+                btnSeedPrices.innerHTML = origHtml;
+            }
+        });
     }
 
     // --- Load Email Configuration ---
@@ -1393,14 +1460,11 @@ function renderServicesPricingEditor() {
     const container = document.getElementById('services-pricing-list');
     if (!container) return;
 
+    const listToRender = (servicesList && servicesList.length > 0) ? servicesList : DEFAULT_SERVICES;
+
     container.innerHTML = '';
 
-    if (servicesList.length === 0) {
-        container.innerHTML = '<p style="color: var(--color-text-muted); font-size: 0.85rem;">No services found. Loading or auto-seeding default services...</p>';
-        return;
-    }
-
-    servicesList.forEach(service => {
+    listToRender.forEach(service => {
         const row = document.createElement('div');
         row.className = 'pricing-edit-row';
         row.innerHTML = `
@@ -1450,11 +1514,21 @@ function saveSingleServicePrice(docId, btnElement) {
     btnElement.disabled = true;
     btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-    updateDoc(doc(db, "services", docId), {
+    const existing = servicesList.find(s => s.docId === docId) || DEFAULT_SERVICES.find(s => s.docId === docId) || {};
+    const updateData = {
+        ...existing,
         price: newPrice,
-        duration: isNaN(newDuration) ? 45 : newDuration
-    })
+        duration: isNaN(newDuration) ? (existing.duration || 45) : newDuration
+    };
+    delete updateData.docId;
+
+    setDoc(doc(db, "services", docId), updateData, { merge: true })
         .then(() => {
+            const index = servicesList.findIndex(s => s.docId === docId);
+            if (index !== -1) {
+                servicesList[index].price = newPrice;
+                servicesList[index].duration = updateData.duration;
+            }
             showToast('Service price updated successfully!', 'success');
             btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
             setTimeout(() => {
@@ -1475,14 +1549,11 @@ function renderAddonsPricingEditor() {
     const container = document.getElementById('addons-pricing-list');
     if (!container) return;
 
+    const listToRender = (addonsList && addonsList.length > 0) ? addonsList : DEFAULT_ADDONS;
+
     container.innerHTML = '';
 
-    if (addonsList.length === 0) {
-        container.innerHTML = '<p style="color: var(--color-text-muted); font-size: 0.85rem;">No add-ons found. Loading or auto-seeding default add-ons...</p>';
-        return;
-    }
-
-    addonsList.forEach(addon => {
+    listToRender.forEach(addon => {
         const row = document.createElement('div');
         row.className = 'pricing-edit-row addon-row';
         row.innerHTML = `
@@ -1524,8 +1595,19 @@ function saveSingleAddonPrice(docId, btnElement) {
     btnElement.disabled = true;
     btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-    updateDoc(doc(db, "addons", docId), { price: newPrice })
+    const existing = addonsList.find(a => a.docId === docId) || DEFAULT_ADDONS.find(a => a.docId === docId) || {};
+    const updateData = {
+        ...existing,
+        price: newPrice
+    };
+    delete updateData.docId;
+
+    setDoc(doc(db, "addons", docId), updateData, { merge: true })
         .then(() => {
+            const index = addonsList.findIndex(a => a.docId === docId);
+            if (index !== -1) {
+                addonsList[index].price = newPrice;
+            }
             showToast('Add-on price updated successfully!', 'success');
             btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
             setTimeout(() => {
@@ -1559,14 +1641,19 @@ function saveAllPrices() {
         
         // Find matching duration input
         const durationInput = document.querySelector(`.service-duration-input[data-docid="${docId}"]`);
-        const newDuration = durationInput ? parseInt(durationInput.value) : null;
+        const newDuration = durationInput ? parseInt(durationInput.value) : 45;
 
-        const updateData = { price: newPrice };
-        if (newDuration !== null && !isNaN(newDuration)) updateData.duration = newDuration;
+        if (!isNaN(newPrice) && newPrice >= 0 && docId) {
+            const existing = servicesList.find(s => s.docId === docId) || DEFAULT_SERVICES.find(s => s.docId === docId) || {};
+            const updateData = {
+                ...existing,
+                price: newPrice,
+                duration: isNaN(newDuration) ? (existing.duration || 45) : newDuration
+            };
+            delete updateData.docId;
 
-        if (!isNaN(newPrice) && newPrice >= 0) {
             promises.push(
-                updateDoc(doc(db, "services", docId), updateData)
+                setDoc(doc(db, "services", docId), updateData, { merge: true })
             );
         }
     });
@@ -1576,9 +1663,16 @@ function saveAllPrices() {
         const docId = input.getAttribute('data-docid');
         const newPrice = parseFloat(input.value);
 
-        if (!isNaN(newPrice) && newPrice >= 0) {
+        if (!isNaN(newPrice) && newPrice >= 0 && docId) {
+            const existing = addonsList.find(a => a.docId === docId) || DEFAULT_ADDONS.find(a => a.docId === docId) || {};
+            const updateData = {
+                ...existing,
+                price: newPrice
+            };
+            delete updateData.docId;
+
             promises.push(
-                updateDoc(doc(db, "addons", docId), { price: newPrice })
+                setDoc(doc(db, "addons", docId), updateData, { merge: true })
             );
         }
     });
@@ -1899,6 +1993,8 @@ function checkUrlScanCompletion() {
     }
 }
 
-// Wire QR Scanner during initialization
+// Wire QR Scanner and CMS Editors during initialization
 initAdminQRScanner();
+renderServicesPricingEditor();
+renderAddonsPricingEditor();
 

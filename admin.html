@@ -342,10 +342,15 @@
                     </div>
                 </div>
 
-                <!-- Save Prices Button -->
-                <button class="btn btn-primary btn-save-all-prices" id="btn-save-prices" style="margin-bottom: 35px;">
-                    <i class="fa-solid fa-floppy-disk"></i> Save All Prices
-                </button>
+                <!-- Save Prices Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 20px; margin-bottom: 35px; flex-wrap: wrap;">
+                    <button class="btn btn-primary btn-save-all-prices" id="btn-save-prices" style="margin-bottom: 0;">
+                        <i class="fa-solid fa-floppy-disk"></i> Save All Prices
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btn-seed-default-prices" style="font-size: 0.85rem; padding: 12px 20px;">
+                        <i class="fa-solid fa-arrows-rotate"></i> Seed / Reset Default Prices
+                    </button>
+                </div>
 
                 <!-- Section 4: Email Notifications (EmailJS & Gmail Service) -->
                 <div class="cms-section glass-panel" style="margin-top: 20px;">
