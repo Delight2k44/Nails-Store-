@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Nails gallery images
+    match /nails/{allPaths=**} {
+      allow read, write: if true;
+    }
+    
+    // CMS Layout images (Hero / About)
+    match /layout/{allPaths=**} {
+      allow read, write: if true;
+    }
+    
+    // Default catch-all
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -456,6 +456,14 @@ function initDashboardData() {
 
     // 5. Real-time Services Watcher (CMS)
     try {
+        const cachedServices = localStorage.getItem('ndi_services_cache');
+        if (cachedServices) {
+            try {
+                const parsed = JSON.parse(cachedServices);
+                if (Array.isArray(parsed) && parsed.length > 0) servicesList = parsed;
+            } catch (e) {}
+        }
+
         const servicesQuery = collection(db, "services");
         unsubServices = onSnapshot(servicesQuery, (snapshot) => {
             if (snapshot.empty) {
@@ -473,20 +481,27 @@ function initDashboardData() {
                 // Sort locally by order or name
                 servicesList.sort((a, b) => (a.order || 99) - (b.order || 99));
             }
+            try { localStorage.setItem('ndi_services_cache', JSON.stringify(servicesList)); } catch (e) {}
             renderServicesPricingEditor();
         }, (err) => {
-            console.error("Services stream error (using defaults):", err);
-            servicesList = [...DEFAULT_SERVICES];
+            console.warn("Services stream error (using cached/defaults):", err);
             renderServicesPricingEditor();
         });
     } catch (err) {
-        console.error("Services init error:", err);
-        servicesList = [...DEFAULT_SERVICES];
+        console.warn("Services init error:", err);
         renderServicesPricingEditor();
     }
 
     // 6. Real-time Addons Watcher (CMS)
     try {
+        const cachedAddons = localStorage.getItem('ndi_addons_cache');
+        if (cachedAddons) {
+            try {
+                const parsed = JSON.parse(cachedAddons);
+                if (Array.isArray(parsed) && parsed.length > 0) addonsList = parsed;
+            } catch (e) {}
+        }
+
         const addonsQuery = collection(db, "addons");
         unsubAddons = onSnapshot(addonsQuery, (snapshot) => {
             if (snapshot.empty) {
@@ -501,15 +516,14 @@ function initDashboardData() {
                     addonsList.push({ docId: docSnap.id, ...docSnap.data() });
                 });
             }
+            try { localStorage.setItem('ndi_addons_cache', JSON.stringify(addonsList)); } catch (e) {}
             renderAddonsPricingEditor();
         }, (err) => {
-            console.error("Addons stream error (using defaults):", err);
-            addonsList = [...DEFAULT_ADDONS];
+            console.warn("Addons stream error (using cached/defaults):", err);
             renderAddonsPricingEditor();
         });
     } catch (err) {
-        console.error("Addons init error:", err);
-        addonsList = [...DEFAULT_ADDONS];
+        console.warn("Addons init error:", err);
         renderAddonsPricingEditor();
     }
 
@@ -2407,7 +2421,7 @@ async function handleSaveServiceModal(e) {
         btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
     }
 
-    const serviceData = {
+        const serviceData = {
         name,
         category,
         price,
@@ -2416,24 +2430,29 @@ async function handleSaveServiceModal(e) {
         order: servicesList.length + 1
     };
 
+    // Update in memory and local storage cache immediately
+    const idx = servicesList.findIndex(s => s.docId === docId);
+    if (idx !== -1) {
+        servicesList[idx] = { docId, ...serviceData };
+    } else {
+        servicesList.push({ docId, ...serviceData });
+    }
+    servicesList.sort((a, b) => (a.order || 99) - (b.order || 99));
+    try { localStorage.setItem('ndi_services_cache', JSON.stringify(servicesList)); } catch (e) {}
+    renderServicesPricingEditor();
+
     try {
         await setDoc(doc(db, "services", docId), serviceData, { merge: true });
-
-        // Update in memory list
-        const idx = servicesList.findIndex(s => s.docId === docId);
-        if (idx !== -1) {
-            servicesList[idx] = { docId, ...serviceData };
-        } else {
-            servicesList.push({ docId, ...serviceData });
-        }
-        servicesList.sort((a, b) => (a.order || 99) - (b.order || 99));
-
         showToast(`✨ Service "${name}" saved successfully!`, 'success');
         closeServiceModal();
-        renderServicesPricingEditor();
     } catch (err) {
         console.error("Save service modal error:", err);
-        showToast(`Failed to save service: ${err.message || 'Error'}`, 'error');
+        if (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission'))) {
+            showToast('⚠️ Saved locally. To publish permanently, deploy firestore.rules in Firebase Console.', 'warning');
+            closeServiceModal();
+        } else {
+            showToast(`Failed to save service: ${err.message || 'Error'}`, 'error');
+        }
     } finally {
         if (btnSubmit) {
             btnSubmit.disabled = false;
@@ -2446,15 +2465,21 @@ function deleteService(docId, serviceName = 'this service') {
     const confirmed = confirm(`Are you sure you want to delete "${serviceName}" from your services? Clients will no longer see it.`);
     if (!confirmed) return;
 
+    servicesList = servicesList.filter(s => s.docId !== docId);
+    try { localStorage.setItem('ndi_services_cache', JSON.stringify(servicesList)); } catch (e) {}
+    renderServicesPricingEditor();
+
     deleteDoc(doc(db, "services", docId))
         .then(() => {
-            servicesList = servicesList.filter(s => s.docId !== docId);
-            renderServicesPricingEditor();
             showToast(`🗑️ Service "${serviceName}" deleted.`, 'info');
         })
         .catch(err => {
             console.error("Delete service error:", err);
-            showToast(`Failed to delete service: ${err.message || 'Error'}`, 'error');
+            if (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission'))) {
+                showToast('⚠️ Removed locally. Deploy firestore.rules in Firebase Console to sync.', 'warning');
+            } else {
+                showToast(`Failed to delete service: ${err.message || 'Error'}`, 'error');
+            }
         });
 }
 
@@ -2484,13 +2509,16 @@ function saveSingleServicePrice(docId, btnElement) {
     };
     delete updateData.docId;
 
+    // Update in memory & cache immediately
+    const index = servicesList.findIndex(s => s.docId === docId);
+    if (index !== -1) {
+        servicesList[index].price = newPrice;
+        servicesList[index].duration = updateData.duration;
+    }
+    try { localStorage.setItem('ndi_services_cache', JSON.stringify(servicesList)); } catch (e) {}
+
     setDoc(doc(db, "services", docId), updateData, { merge: true })
         .then(() => {
-            const index = servicesList.findIndex(s => s.docId === docId);
-            if (index !== -1) {
-                servicesList[index].price = newPrice;
-                servicesList[index].duration = updateData.duration;
-            }
             showToast('Service price updated successfully!', 'success');
             btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
             setTimeout(() => {
@@ -2500,9 +2528,18 @@ function saveSingleServicePrice(docId, btnElement) {
         })
         .catch(err => {
             console.error("Save service price error:", err);
-            showToast(`Failed to save price: ${err.message || 'Error'}`, 'error');
-            btnElement.disabled = false;
-            btnElement.innerHTML = origHTML;
+            if (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission'))) {
+                showToast('⚠️ Price saved locally. Please deploy firestore.rules in Firebase Console.', 'warning');
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Saved Local';
+                setTimeout(() => {
+                    btnElement.disabled = false;
+                    btnElement.innerHTML = origHTML;
+                }, 2200);
+            } else {
+                showToast(`Failed to save price: ${err.message || 'Error'}`, 'error');
+                btnElement.disabled = false;
+                btnElement.innerHTML = origHTML;
+            }
         });
 }
 
@@ -2628,22 +2665,28 @@ async function handleSaveAddonModal(e) {
 
     const addonData = { name, price };
 
+    // Update in memory & cache immediately
+    const idx = addonsList.findIndex(a => a.docId === docId);
+    if (idx !== -1) {
+        addonsList[idx] = { docId, ...addonData };
+    } else {
+        addonsList.push({ docId, ...addonData });
+    }
+    try { localStorage.setItem('ndi_addons_cache', JSON.stringify(addonsList)); } catch (e) {}
+    renderAddonsPricingEditor();
+
     try {
         await setDoc(doc(db, "addons", docId), addonData, { merge: true });
-
-        const idx = addonsList.findIndex(a => a.docId === docId);
-        if (idx !== -1) {
-            addonsList[idx] = { docId, ...addonData };
-        } else {
-            addonsList.push({ docId, ...addonData });
-        }
-
         showToast(`✨ Add-on "${name}" saved successfully!`, 'success');
         closeAddonModal();
-        renderAddonsPricingEditor();
     } catch (err) {
         console.error("Save addon modal error:", err);
-        showToast(`Failed to save add-on: ${err.message || 'Error'}`, 'error');
+        if (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission'))) {
+            showToast('⚠️ Saved locally. Deploy firestore.rules in Firebase Console to sync.', 'warning');
+            closeAddonModal();
+        } else {
+            showToast(`Failed to save add-on: ${err.message || 'Error'}`, 'error');
+        }
     } finally {
         if (btnSubmit) {
             btnSubmit.disabled = false;
@@ -2656,15 +2699,21 @@ function deleteAddon(docId, addonName = 'this add-on') {
     const confirmed = confirm(`Are you sure you want to delete "${addonName}" from your add-ons?`);
     if (!confirmed) return;
 
+    addonsList = addonsList.filter(a => a.docId !== docId);
+    try { localStorage.setItem('ndi_addons_cache', JSON.stringify(addonsList)); } catch (e) {}
+    renderAddonsPricingEditor();
+
     deleteDoc(doc(db, "addons", docId))
         .then(() => {
-            addonsList = addonsList.filter(a => a.docId !== docId);
-            renderAddonsPricingEditor();
             showToast(`🗑️ Add-on "${addonName}" deleted.`, 'info');
         })
         .catch(err => {
             console.error("Delete addon error:", err);
-            showToast(`Failed to delete add-on: ${err.message || 'Error'}`, 'error');
+            if (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission'))) {
+                showToast('⚠️ Removed locally. Deploy firestore.rules in Firebase Console to sync.', 'warning');
+            } else {
+                showToast(`Failed to delete add-on: ${err.message || 'Error'}`, 'error');
+            }
         });
 }
 
@@ -2689,12 +2738,15 @@ function saveSingleAddonPrice(docId, btnElement) {
     };
     delete updateData.docId;
 
+    // Update in memory & cache immediately
+    const index = addonsList.findIndex(a => a.docId === docId);
+    if (index !== -1) {
+        addonsList[index].price = newPrice;
+    }
+    try { localStorage.setItem('ndi_addons_cache', JSON.stringify(addonsList)); } catch (e) {}
+
     setDoc(doc(db, "addons", docId), updateData, { merge: true })
         .then(() => {
-            const index = addonsList.findIndex(a => a.docId === docId);
-            if (index !== -1) {
-                addonsList[index].price = newPrice;
-            }
             showToast('Add-on price updated successfully!', 'success');
             btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Saved';
             setTimeout(() => {
@@ -2704,9 +2756,18 @@ function saveSingleAddonPrice(docId, btnElement) {
         })
         .catch(err => {
             console.error("Save addon price error:", err);
-            showToast(`Failed to save price: ${err.message || 'Error'}`, 'error');
-            btnElement.disabled = false;
-            btnElement.innerHTML = origHTML;
+            if (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission'))) {
+                showToast('⚠️ Price saved locally. Please deploy firestore.rules in Firebase Console.', 'warning');
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Saved Local';
+                setTimeout(() => {
+                    btnElement.disabled = false;
+                    btnElement.innerHTML = origHTML;
+                }, 2200);
+            } else {
+                showToast(`Failed to save price: ${err.message || 'Error'}`, 'error');
+                btnElement.disabled = false;
+                btnElement.innerHTML = origHTML;
+            }
         });
 }
 
@@ -2739,6 +2800,12 @@ function saveAllPrices() {
             };
             delete updateData.docId;
 
+            const index = servicesList.findIndex(s => s.docId === docId);
+            if (index !== -1) {
+                servicesList[index].price = newPrice;
+                servicesList[index].duration = updateData.duration;
+            }
+
             promises.push(
                 setDoc(doc(db, "services", docId), updateData, { merge: true })
             );
@@ -2758,11 +2825,21 @@ function saveAllPrices() {
             };
             delete updateData.docId;
 
+            const index = addonsList.findIndex(a => a.docId === docId);
+            if (index !== -1) {
+                addonsList[index].price = newPrice;
+            }
+
             promises.push(
                 setDoc(doc(db, "addons", docId), updateData, { merge: true })
             );
         }
     });
+
+    try {
+        localStorage.setItem('ndi_services_cache', JSON.stringify(servicesList));
+        localStorage.setItem('ndi_addons_cache', JSON.stringify(addonsList));
+    } catch (e) {}
 
     Promise.all(promises)
         .then(() => {
@@ -2770,7 +2847,11 @@ function saveAllPrices() {
         })
         .catch(err => {
             console.error("Price save error:", err);
-            showToast(`Failed to save some prices. ${err.message || 'Try again.'}`, 'error');
+            if (err.code === 'permission-denied' || (err.message && err.message.toLowerCase().includes('permission'))) {
+                showToast('⚠️ Prices saved locally. Please deploy firestore.rules in Firebase Console.', 'warning');
+            } else {
+                showToast(`Failed to save some prices. ${err.message || 'Try again.'}`, 'error');
+            }
         })
         .finally(() => {
             if (savePricesBtn) {
@@ -2778,6 +2859,7 @@ function saveAllPrices() {
                 savePricesBtn.innerHTML = origText;
             }
         });
+}
 }
 
 /* ==========================================

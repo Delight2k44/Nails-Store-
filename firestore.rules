@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Bookings collection
+    match /bookings/{bookingId} {
+      allow read, write: if true;
+    }
+    
+    // 2. Reviews collection
+    match /reviews/{reviewId} {
+      allow read, write: if true;
+    }
+    
+    // 3. Portfolio Designs (Nails)
+    match /nails/{nailId} {
+      allow read, write: if true;
+    }
+    
+    // 4. Services Pricing & Details
+    match /services/{serviceId} {
+      allow read, write: if true;
+    }
+    
+    // 5. Optional Add-ons Pricing
+    match /addons/{addonId} {
+      allow read, write: if true;
+    }
+    
+    // 6. Settings (Layout & Email Notifications)
+    match /settings/{settingId} {
+      allow read, write: if true;
+    }
+    
+    // Default catch-all
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

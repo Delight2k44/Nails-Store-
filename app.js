@@ -115,21 +115,38 @@ function initDynamicLayout() {
    DYNAMIC SERVICES & ADDONS FROM FIRESTORE
    ========================================== */
 function loadDynamicServices(onServicesLoaded) {
+    // 1. Initial fast load from local cache if available
+    try {
+        const cached = localStorage.getItem('ndi_services_cache');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                renderServiceCards(parsed);
+                renderBookingServiceOptions(parsed);
+                if (onServicesLoaded) onServicesLoaded(parsed);
+            }
+        }
+    } catch (e) {}
+
+    // 2. Real-time sync with Firestore
     try {
         const servicesQuery = collection(db, "services");
         onSnapshot(servicesQuery, (snapshot) => {
             if (snapshot.empty) {
-                // No services in DB yet — keep static HTML as fallback
                 return;
             }
             
             const services = [];
             snapshot.forEach(docSnap => {
-                services.push(docSnap.data());
+                services.push({ docId: docSnap.id, ...docSnap.data() });
             });
 
             // Sort services by order field locally
             services.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            try {
+                localStorage.setItem('ndi_services_cache', JSON.stringify(services));
+            } catch (e) {}
 
             // Render service cards in the pricing section
             renderServiceCards(services);
@@ -138,7 +155,7 @@ function loadDynamicServices(onServicesLoaded) {
             
             if (onServicesLoaded) onServicesLoaded(services);
         }, (err) => {
-            console.warn("Services fetch error (using static fallback):", err);
+            console.warn("Services fetch error (using cached fallback):", err);
         });
     } catch (err) {
         console.warn("Services init skipped:", err);
@@ -146,18 +163,34 @@ function loadDynamicServices(onServicesLoaded) {
 }
 
 function loadDynamicAddons() {
+    // 1. Initial fast load from local cache if available
+    try {
+        const cached = localStorage.getItem('ndi_addons_cache');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                renderBookingAddonOptions(parsed);
+            }
+        }
+    } catch (e) {}
+
+    // 2. Real-time sync with Firestore
     try {
         onSnapshot(collection(db, "addons"), (snapshot) => {
             if (snapshot.empty) return;
             
             const addons = [];
             snapshot.forEach(docSnap => {
-                addons.push(docSnap.data());
+                addons.push({ docId: docSnap.id, ...docSnap.data() });
             });
+
+            try {
+                localStorage.setItem('ndi_addons_cache', JSON.stringify(addons));
+            } catch (e) {}
 
             renderBookingAddonOptions(addons);
         }, (err) => {
-            console.warn("Addons fetch error (using static fallback):", err);
+            console.warn("Addons fetch error (using cached fallback):", err);
         });
     } catch (err) {
         console.warn("Addons init skipped:", err);
