@@ -189,7 +189,7 @@ if (btnForgotPassword) {
     btnForgotPassword.addEventListener('click', () => {
         const email = emailInput ? emailInput.value.trim() : '';
         if (!email) {
-            showToast('Please enter your admin email above first, then click "Forgot password?".', 'warning');
+            showToast('Please enter your UserID / Email above first, then click "Forgot password?".', 'warning');
             if (emailInput) emailInput.focus();
             return;
         }
