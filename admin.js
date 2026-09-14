@@ -536,9 +536,6 @@ function initDashboardData() {
         console.error("Layout init error:", err);
     }
 
-    // Initialize Uploader & CMS Behaviors
-    initUploaderBehaviors();
-    initCMSBehaviors();
 }
 
 function cleanupWatchers() {
@@ -1393,8 +1390,14 @@ async function uploadImageWithFallback(file, folder = 'nails', onProgress) {
    PORTFOLIO GALLERY: UPLOADER & DESIGNS MANAGER (CRUD)
    ========================================== */
 let activeNailsFilter = 'all';
+let uploaderBehaviorsInitialized = false;
+let isNailMainUploading = false;
+let isNailModalUploading = false;
 
 function initUploaderBehaviors() {
+    if (uploaderBehaviorsInitialized) return;
+    uploaderBehaviorsInitialized = true;
+
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('nail-file-input');
     const preview = document.getElementById('upload-preview');
@@ -1434,6 +1437,8 @@ function initUploaderBehaviors() {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            if (isNailMainUploading) return;
+
             const title = document.getElementById('nail-title').value.trim();
             const category = document.getElementById('nail-category').value;
             const file = fileInput ? fileInput.files[0] : null;
@@ -1442,6 +1447,8 @@ function initUploaderBehaviors() {
                 showToast('Please select a nail photo to upload.', 'warning');
                 return;
             }
+
+            isNailMainUploading = true;
 
             const btnPublish = document.getElementById('btn-submit-upload');
             const origText = btnPublish ? btnPublish.innerHTML : 'Publish to Gallery';
@@ -1481,6 +1488,7 @@ function initUploaderBehaviors() {
                 console.error("Upload error:", err);
                 showToast(`Upload error: ${err.message || 'Please try again.'}`, 'error');
             } finally {
+                isNailMainUploading = false;
                 if (btnPublish) {
                     btnPublish.disabled = false;
                     btnPublish.innerHTML = origText;
@@ -1545,6 +1553,8 @@ function initUploaderBehaviors() {
         modalUploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            if (isNailModalUploading) return;
+
             const title = document.getElementById('modal-nail-title').value.trim();
             const category = document.getElementById('modal-nail-category').value;
             const file = modalFileInput ? modalFileInput.files[0] : null;
@@ -1557,6 +1567,8 @@ function initUploaderBehaviors() {
                 showToast('Please select a nail photo to upload.', 'warning');
                 return;
             }
+
+            isNailModalUploading = true;
 
             const origText = btnModalSubmit ? btnModalSubmit.innerHTML : 'Publish Design';
             if (btnModalSubmit) {
@@ -1585,6 +1597,7 @@ function initUploaderBehaviors() {
                 console.error("Modal upload error:", err);
                 showToast(`Upload error: ${err.message || 'Please try again.'}`, 'error');
             } finally {
+                isNailModalUploading = false;
                 if (btnModalSubmit) {
                     btnModalSubmit.disabled = false;
                     btnModalSubmit.innerHTML = origText;
@@ -1995,7 +2008,11 @@ async function seedDefaultServicesAndAddons(force = false) {
     renderAddonsPricingEditor();
 }
 
+let cmsBehaviorsInitialized = false;
+
 function initCMSBehaviors() {
+    if (cmsBehaviorsInitialized) return;
+    cmsBehaviorsInitialized = true;
     // Initial immediate renders
     renderServicesPricingEditor();
     renderAddonsPricingEditor();
@@ -2776,7 +2793,11 @@ const manualBookingInput = document.getElementById('manual-booking-id-input');
 const btnManualComplete = document.getElementById('btn-manual-complete-booking');
 const qrFeedback = document.getElementById('qr-scan-feedback');
 
+let adminQRScannerInitialized = false;
+
 function initAdminQRScanner() {
+    if (adminQRScannerInitialized) return;
+    adminQRScannerInitialized = true;
     if (btnOpenQRScanner) {
         btnOpenQRScanner.addEventListener('click', openQRScannerModal);
     }
