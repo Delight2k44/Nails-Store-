@@ -48,7 +48,7 @@
                     <div class="input-icon-wrapper">
                         <i class="fa-solid fa-lock input-icon"></i>
                         <input type="password" id="admin-password" placeholder="••••••••" required autocomplete="current-password">
-                        <button type="button" class="btn-toggle-password" id="btn-toggle-password" title="Show/Hide Password" aria-label="Toggle password visibility">
+                        <button type="button" class="btn-toggle-password" id="btn-toggle-password" onclick="togglePasswordVisibility()" title="Show/Hide Password" aria-label="Toggle password visibility">
                             <i class="fa-solid fa-eye" id="toggle-password-icon"></i>
                         </button>
                     </div>
@@ -842,8 +842,34 @@
         </div>
     </div>
 
+    <!-- Inline Fast Helpers (Always Available) -->
+    <script>
+        function togglePasswordVisibility() {
+            var p = document.getElementById('admin-password');
+            var icon = document.getElementById('toggle-password-icon');
+            if (!p) return;
+            if (p.type === 'password') {
+                p.type = 'text';
+                if (icon) icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                p.type = 'password';
+                if (icon) icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        // Detect if user opened the page as a local file instead of live server
+        if (window.location.protocol === 'file:') {
+            window.addEventListener('DOMContentLoaded', function() {
+                var warningDiv = document.createElement('div');
+                warningDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;padding:14px 20px;text-align:center;font-family:system-ui,sans-serif;font-weight:600;z-index:999999;box-shadow:0 4px 20px rgba(0,0,0,0.5);font-size:14px;';
+                warningDiv.innerHTML = '⚠️ Local File Detected: Firebase cannot run from a local folder (file://). Please open the live web link: <a href="https://nails-store.vercel.app/admin" style="color:#fff;text-decoration:underline;margin-left:8px;font-weight:bold;" target="_blank">https://nails-store.vercel.app/admin</a>';
+                document.body.appendChild(warningDiv);
+            });
+        }
+    </script>
+
     <!-- HTML5 QR Code Scanner Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" defer></script>
 
     <!-- Firebase SDK Imports & Controller JS -->
     <script type="module" src="admin.js"></script>
