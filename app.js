@@ -116,7 +116,7 @@ function initDynamicLayout() {
    ========================================== */
 function loadDynamicServices(onServicesLoaded) {
     try {
-        const servicesQuery = query(collection(db, "services"), orderBy("order", "asc"));
+        const servicesQuery = collection(db, "services");
         onSnapshot(servicesQuery, (snapshot) => {
             if (snapshot.empty) {
                 // No services in DB yet — keep static HTML as fallback
@@ -127,6 +127,9 @@ function loadDynamicServices(onServicesLoaded) {
             snapshot.forEach(docSnap => {
                 services.push(docSnap.data());
             });
+
+            // Sort services by order field locally
+            services.sort((a, b) => (a.order || 0) - (b.order || 0));
 
             // Render service cards in the pricing section
             renderServiceCards(services);
@@ -819,8 +822,7 @@ function initReviewsSystem() {
 
     const reviewsQuery = query(
         collection(db, "reviews"), 
-        where("status", "==", "approved"), 
-        orderBy("createdAt", "desc")
+        where("status", "==", "approved")
     );
 
     onSnapshot(reviewsQuery, (snapshot) => {
@@ -831,12 +833,18 @@ function initReviewsSystem() {
 
         if (reviewsList.length === 0) {
             reviewsList = defaultReviews;
+        } else {
+            reviewsList.sort((a, b) => {
+                const timeA = a.createdAt?.seconds || (a.createdAt?.toDate ? a.createdAt.toDate().getTime() / 1000 : 0);
+                const timeB = b.createdAt?.seconds || (b.createdAt?.toDate ? b.createdAt.toDate().getTime() / 1000 : 0);
+                return timeB - timeA;
+            });
         }
 
         renderReviews(reviewsList);
         updateMetrics(reviewsList);
     }, (err) => {
-        console.warn("Reviews watcher failed; using defaults.", err);
+        console.warn("Reviews watcher notice; using defaults.", err);
         renderReviews(defaultReviews);
         updateMetrics(defaultReviews);
     });

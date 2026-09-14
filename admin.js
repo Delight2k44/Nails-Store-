@@ -348,7 +348,7 @@ menuItems.forEach(item => {
 function initDashboardData() {
     // 1. Real-time Bookings Watcher
     try {
-        const bookingsQuery = query(collection(db, "bookings"), orderBy("createdAt", "desc"));
+        const bookingsQuery = collection(db, "bookings");
         unsubBookings = onSnapshot(bookingsQuery, (snapshot) => {
             allBookingsList = [];
             snapshot.forEach(docSnap => {
@@ -357,6 +357,13 @@ function initDashboardData() {
                 allBookingsList.push({ docId: docSnap.id, ...docSnap.data() });
             });
             
+            // Sort by createdAt desc locally (safely handles missing/varied timestamp formats)
+            allBookingsList.sort((a, b) => {
+                const timeA = a.createdAt?.seconds || (a.createdAt?.toDate ? a.createdAt.toDate().getTime() / 1000 : 0);
+                const timeB = b.createdAt?.seconds || (b.createdAt?.toDate ? b.createdAt.toDate().getTime() / 1000 : 0);
+                return timeB - timeA;
+            });
+
             updateStats();
             renderBookingsTable();
         }, (err) => {
@@ -370,21 +377,29 @@ function initDashboardData() {
 
     // 2. Real-time Pending Reviews Watcher
     try {
-        const pendingReviewsQuery = query(collection(db, "reviews"), where("status", "==", "pending"), orderBy("createdAt", "desc"));
+        // Query without composite index requirement (single where filter)
+        const pendingReviewsQuery = query(collection(db, "reviews"), where("status", "==", "pending"));
         unsubPendingReviews = onSnapshot(pendingReviewsQuery, (snapshot) => {
             const pendingReviews = [];
             snapshot.forEach(docSnap => {
                 pendingReviews.push({ docId: docSnap.id, ...docSnap.data() });
             });
             
-            document.getElementById('stat-pending-bookings').innerText = allBookingsList.filter(b => b.status === 'pending').length;
+            // Sort reviews locally by createdAt desc
+            pendingReviews.sort((a, b) => {
+                const timeA = a.createdAt?.seconds || (a.createdAt?.toDate ? a.createdAt.toDate().getTime() / 1000 : 0);
+                const timeB = b.createdAt?.seconds || (b.createdAt?.toDate ? b.createdAt.toDate().getTime() / 1000 : 0);
+                return timeB - timeA;
+            });
+
             renderPendingReviews(pendingReviews);
         }, (err) => {
-            console.error("Pending reviews stream error:", err);
-            showToast('Failed to load pending reviews.', 'error');
+            console.warn("Pending reviews stream notice:", err);
+            renderPendingReviews([]);
         });
     } catch (err) {
-        console.error("Pending reviews init error:", err);
+        console.warn("Pending reviews init error:", err);
+        renderPendingReviews([]);
     }
 
     // 3. Real-time Approved Reviews Watcher (for average stats)
