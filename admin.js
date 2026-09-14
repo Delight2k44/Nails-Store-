@@ -1363,7 +1363,142 @@ function initUploaderBehaviors() {
         });
     });
 
-    // Wire Edit Nail Modal
+    // --- Add Nail Modal Drop Zone & File Input ---
+    const modalFileInput = document.getElementById('modal-nail-file-input');
+    const modalPreview = document.getElementById('modal-upload-preview');
+    const modalDropZone = document.getElementById('modal-drop-zone');
+
+    if (modalFileInput) {
+        modalFileInput.addEventListener('change', () => {
+            const file = modalFileInput.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('File too large. Maximum size is 5MB.', 'warning');
+                    modalFileInput.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (modalPreview) {
+                        modalPreview.src = e.target.result;
+                        modalPreview.style.display = 'block';
+                    }
+                    if (modalDropZone) {
+                        const icon = modalDropZone.querySelector('.upload-icon');
+                        const p1 = modalDropZone.querySelector('p:nth-of-type(1)');
+                        const p2 = modalDropZone.querySelector('p:nth-of-type(2)');
+                        if (icon) icon.style.display = 'none';
+                        if (p1) p1.style.display = 'none';
+                        if (p2) p2.style.display = 'none';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // --- Add Nail Modal Form Submission ---
+    const modalUploadForm = document.getElementById('modal-nail-upload-form');
+    const modalProgressContainer = document.getElementById('modal-upload-progress-container');
+    const modalProgressBar = document.getElementById('modal-upload-progress-bar');
+    const btnModalSubmit = document.getElementById('btn-modal-submit-upload');
+
+    if (modalUploadForm) {
+        modalUploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('modal-nail-title').value.trim();
+            const category = document.getElementById('modal-nail-category').value;
+            const file = modalFileInput ? modalFileInput.files[0] : null;
+
+            if (!title) {
+                showToast('Please enter a design title (e.g. Gel with Kiss French).', 'warning');
+                return;
+            }
+            if (!file) {
+                showToast('Please select a nail photo to upload.', 'warning');
+                return;
+            }
+
+            const origText = btnModalSubmit ? btnModalSubmit.innerHTML : 'Publish Design';
+            if (btnModalSubmit) {
+                btnModalSubmit.disabled = true;
+                btnModalSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+            }
+
+            if (modalProgressContainer) modalProgressContainer.style.display = 'block';
+            if (modalProgressBar) modalProgressBar.style.width = '0%';
+
+            const fileRef = ref(storage, `nails/${Date.now()}_${file.name}`);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    if (modalProgressBar) modalProgressBar.style.width = `${progress}%`;
+                },
+                (error) => {
+                    console.error("Modal upload error:", error);
+                    showToast('Upload failed. Please check your connection and try again.', 'error');
+                    if (btnModalSubmit) {
+                        btnModalSubmit.disabled = false;
+                        btnModalSubmit.innerHTML = origText;
+                    }
+                    if (modalProgressContainer) modalProgressContainer.style.display = 'none';
+                },
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                        addDoc(collection(db, "nails"), {
+                            title: title,
+                            category: category,
+                            imageUrl: downloadURL,
+                            createdAt: Timestamp.now()
+                        })
+                        .then(() => {
+                            showToast(`✨ "${title}" published to the live gallery!`, 'success');
+                            closeAddNailModal();
+                        })
+                        .catch(err => {
+                            console.error("Firestore save error:", err);
+                            showToast('Error saving nail metadata to database.', 'error');
+                        })
+                        .finally(() => {
+                            if (btnModalSubmit) {
+                                btnModalSubmit.disabled = false;
+                                btnModalSubmit.innerHTML = origText;
+                            }
+                            if (modalProgressContainer) modalProgressContainer.style.display = 'none';
+                        });
+                    }).catch(err => {
+                        console.error("Download URL error:", err);
+                        showToast('Failed to get download URL. Try again.', 'error');
+                        if (btnModalSubmit) {
+                            btnModalSubmit.disabled = false;
+                            btnModalSubmit.innerHTML = origText;
+                        }
+                        if (modalProgressContainer) modalProgressContainer.style.display = 'none';
+                    });
+                }
+            );
+        });
+    }
+
+    // --- Add Nail Modal Triggers ---
+    const btnOpenAddNail = document.getElementById('btn-open-add-nail-modal');
+    const btnCloseAddNail = document.getElementById('btn-close-add-nail-modal');
+    const btnCancelAddNail = document.getElementById('btn-cancel-add-nail-modal');
+    const addNailModal = document.getElementById('add-nail-modal');
+
+    if (btnOpenAddNail) btnOpenAddNail.addEventListener('click', () => openAddNailModal());
+    if (btnCloseAddNail) btnCloseAddNail.addEventListener('click', closeAddNailModal);
+    if (btnCancelAddNail) btnCancelAddNail.addEventListener('click', closeAddNailModal);
+    if (addNailModal) {
+        addNailModal.addEventListener('click', (e) => {
+            if (e.target === addNailModal) closeAddNailModal();
+        });
+    }
+
+    // --- Wire Edit Nail Modal ---
     const btnCloseEditNail = document.getElementById('btn-close-edit-nail-modal');
     const btnCancelEditNail = document.getElementById('btn-cancel-edit-nail');
     const editNailModal = document.getElementById('edit-nail-modal');
@@ -1379,6 +1514,47 @@ function initUploaderBehaviors() {
 
     if (editNailForm) {
         editNailForm.addEventListener('submit', handleSaveNailEdit);
+    }
+
+    // --- Wire Delete Nail Modal ---
+    const btnCloseDeleteNail = document.getElementById('btn-close-delete-nail-modal');
+    const btnCancelDeleteNail = document.getElementById('btn-cancel-delete-nail-modal');
+    const deleteNailModal = document.getElementById('delete-nail-modal');
+    const btnConfirmDeleteNail = document.getElementById('btn-confirm-delete-nail');
+
+    if (btnCloseDeleteNail) btnCloseDeleteNail.addEventListener('click', closeDeleteNailModal);
+    if (btnCancelDeleteNail) btnCancelDeleteNail.addEventListener('click', closeDeleteNailModal);
+    if (deleteNailModal) {
+        deleteNailModal.addEventListener('click', (e) => {
+            if (e.target === deleteNailModal) closeDeleteNailModal();
+        });
+    }
+    if (btnConfirmDeleteNail) {
+        btnConfirmDeleteNail.addEventListener('click', async () => {
+            if (!pendingDeleteNailId) return;
+
+            const origHtml = btnConfirmDeleteNail.innerHTML;
+            btnConfirmDeleteNail.disabled = true;
+            btnConfirmDeleteNail.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+
+            try {
+                const targetNail = nailsList.find(n => n.docId === pendingDeleteNailId);
+                const title = targetNail ? targetNail.title : 'Design';
+
+                await deleteDoc(doc(db, "nails", pendingDeleteNailId));
+                nailsList = nailsList.filter(n => n.docId !== pendingDeleteNailId);
+                updateStats();
+                renderNailsGalleryManager();
+                showToast(`🗑️ "${title}" removed from the gallery.`, 'info');
+                closeDeleteNailModal();
+            } catch (err) {
+                console.error("Delete nail error:", err);
+                showToast(`Failed to delete design: ${err.message || 'Error'}`, 'error');
+            } finally {
+                btnConfirmDeleteNail.disabled = false;
+                btnConfirmDeleteNail.innerHTML = origHtml;
+            }
+        });
     }
 
     // Seed / Reset Default Gallery Designs Button
@@ -1404,6 +1580,79 @@ function initUploaderBehaviors() {
             }
         });
     }
+}
+
+function openAddNailModal(presetCategory = null) {
+    const modal = document.getElementById('add-nail-modal');
+    const titleInput = document.getElementById('modal-nail-title');
+    const categorySelect = document.getElementById('modal-nail-category');
+    const fileInput = document.getElementById('modal-nail-file-input');
+    const preview = document.getElementById('modal-upload-preview');
+    const dropZone = document.getElementById('modal-drop-zone');
+    const progressContainer = document.getElementById('modal-upload-progress-container');
+
+    if (titleInput) titleInput.value = '';
+
+    let targetCat = presetCategory;
+    if (!targetCat && activeNailsFilter !== 'all') {
+        targetCat = activeNailsFilter;
+    }
+    if (!targetCat) targetCat = 'gel';
+    if (categorySelect) categorySelect.value = targetCat;
+
+    if (fileInput) fileInput.value = '';
+    if (preview) {
+        preview.src = '';
+        preview.style.display = 'none';
+    }
+    if (dropZone) {
+        const icon = dropZone.querySelector('.upload-icon');
+        const p1 = dropZone.querySelector('p:nth-of-type(1)');
+        const p2 = dropZone.querySelector('p:nth-of-type(2)');
+        if (icon) icon.style.display = 'block';
+        if (p1) p1.style.display = 'block';
+        if (p2) p2.style.display = 'block';
+    }
+    if (progressContainer) progressContainer.style.display = 'none';
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeAddNailModal() {
+    const modal = document.getElementById('add-nail-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+let pendingDeleteNailId = null;
+
+function openDeleteNailModal(docId, title) {
+    const nail = nailsList.find(n => n.docId === docId);
+    if (!nail) return;
+
+    pendingDeleteNailId = docId;
+
+    const modal = document.getElementById('delete-nail-modal');
+    const thumb = document.getElementById('delete-nail-thumb');
+    const titleEl = document.getElementById('delete-nail-title-display');
+    const catEl = document.getElementById('delete-nail-category-display');
+
+    if (thumb) thumb.src = nail.imageUrl || 'assets/hero.jpg';
+    if (titleEl) titleEl.innerText = nail.title || title || 'Untitled Design';
+    
+    let catLabel = 'Gel Manicure';
+    if (nail.category === 'acrylic') catLabel = 'Acrylic Extensions';
+    else if (nail.category === 'chrome') catLabel = 'Glazed Chrome';
+    else if (nail.category === 'art') catLabel = 'Custom Nail Art';
+    else if (nail.category) catLabel = nail.category.toUpperCase();
+    if (catEl) catEl.innerText = catLabel;
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeDeleteNailModal() {
+    const modal = document.getElementById('delete-nail-modal');
+    if (modal) modal.style.display = 'none';
+    pendingDeleteNailId = null;
 }
 
 async function seedDefaultNails(force = false) {
@@ -1434,13 +1683,21 @@ function renderNailsGalleryManager() {
     }
 
     if (filtered.length === 0) {
+        const catName = activeNailsFilter === 'all' ? 'gallery' : `${activeNailsFilter.toUpperCase()} section`;
         grid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--color-text-muted);">
                 <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 2rem; color: var(--color-rose-gold); margin-bottom: 10px; display: block;"></i>
-                <p style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">No nail designs found in this category</p>
-                <p style="font-size: 0.8rem;">Upload a new nail photo above to publish it directly to your live portfolio.</p>
+                <p style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">No nail designs found in ${catName}</p>
+                <p style="font-size: 0.8rem; margin-bottom: 15px;">Add your latest nail creations (e.g. Gel with Kiss French, Chrome Foil) to publish them live.</p>
+                <button type="button" class="btn btn-primary btn-empty-add-nail" style="font-size: 0.85rem; padding: 8px 18px;">
+                    <i class="fa-solid fa-plus"></i> Add New Design
+                </button>
             </div>
         `;
+        const btnEmptyAdd = grid.querySelector('.btn-empty-add-nail');
+        if (btnEmptyAdd) {
+            btnEmptyAdd.addEventListener('click', () => openAddNailModal(activeNailsFilter !== 'all' ? activeNailsFilter : 'gel'));
+        }
         return;
     }
 
@@ -1484,7 +1741,7 @@ function renderNailsGalleryManager() {
 
         const btnDelete = card.querySelector('.btn-delete-nail');
         if (btnDelete) {
-            btnDelete.addEventListener('click', () => deleteNailDesign(nail.docId, nail.title));
+            btnDelete.addEventListener('click', () => openDeleteNailModal(nail.docId, nail.title));
         }
 
         grid.appendChild(card);
@@ -1528,7 +1785,7 @@ async function handleSaveNailEdit(e) {
     const newFile = fileInput?.files?.[0];
 
     if (!docId || !newTitle) {
-        showToast('Please fill out the design title.', 'warning');
+        showToast('Please fill out the design title (e.g. Gel with Kiss French).', 'warning');
         return;
     }
 
@@ -1585,7 +1842,7 @@ async function handleSaveNailEdit(e) {
             if (updatedImageUrl) nailsList[idx].imageUrl = updatedImageUrl;
         }
 
-        showToast('✨ Nail design updated successfully!', 'success');
+        showToast(`✨ "${newTitle}" updated successfully!`, 'success');
         closeEditNailModal();
         renderNailsGalleryManager();
 
@@ -1599,23 +1856,6 @@ async function handleSaveNailEdit(e) {
         }
         if (progressContainer) progressContainer.style.display = 'none';
     }
-}
-
-function deleteNailDesign(docId, title = 'this design') {
-    const confirmed = confirm(`Are you sure you want to delete "${title}" from the gallery? This action cannot be undone.`);
-    if (!confirmed) return;
-
-    deleteDoc(doc(db, "nails", docId))
-        .then(() => {
-            nailsList = nailsList.filter(n => n.docId !== docId);
-            updateStats();
-            renderNailsGalleryManager();
-            showToast(`🗑️ "${title}" deleted from the gallery.`, 'info');
-        })
-        .catch(err => {
-            console.error("Delete nail error:", err);
-            showToast(`Failed to delete design: ${err.message || 'Error'}`, 'error');
-        });
 }
 
 /* ==========================================
