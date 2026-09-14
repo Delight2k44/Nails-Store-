@@ -158,14 +158,19 @@ const rememberMeCheckbox = document.getElementById('remember-me');
 // Initial Launch Auth Check
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        loginContainer.style.display = 'none';
-        dashboardWrapper.classList.add('active');
-        initDashboardData();
-        showToast(`Welcome back, ${user.email.split('@')[0]}!`, 'success');
+        if (loginContainer) loginContainer.style.display = 'none';
+        if (dashboardWrapper) dashboardWrapper.classList.add('active');
+        try {
+            initDashboardData();
+        } catch (e) {
+            console.warn("Watcher init notice:", e);
+        }
     } else {
-        cleanupWatchers();
-        dashboardWrapper.classList.remove('active');
-        loginContainer.style.display = 'flex';
+        try {
+            cleanupWatchers();
+        } catch (e) {}
+        if (dashboardWrapper) dashboardWrapper.classList.remove('active');
+        if (loginContainer) loginContainer.style.display = 'flex';
     }
 });
 
@@ -201,7 +206,7 @@ function resolveAdminEmail(input) {
 if (btnForgotPassword) {
     btnForgotPassword.addEventListener('click', () => {
         const rawInput = emailInput ? emailInput.value.trim() : '';
-        const email = resolveAdminEmail(rawInput);
+        const email = resolveAdminEmail(rawInput).toLowerCase();
         if (!email) {
             showToast('Please enter your UserID / Email above first, then click "Forgot password?".', 'warning');
             if (emailInput) emailInput.focus();
@@ -238,7 +243,7 @@ if (loginForm) {
         if (loginError) loginError.style.display = 'none';
 
         const rawInput = emailInput.value.trim();
-        const email = resolveAdminEmail(rawInput);
+        const email = resolveAdminEmail(rawInput).toLowerCase();
         const password = passwordInput.value;
 
         if (!email) {
@@ -253,14 +258,30 @@ if (loginForm) {
         btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing In...';
 
         try {
-            // Configure persistence based on "Remember me" checkbox
-            if (rememberMeCheckbox && rememberMeCheckbox.checked) {
-                await setPersistence(auth, browserLocalPersistence);
-            } else {
-                await setPersistence(auth, browserSessionPersistence);
+            // Configure persistence safely without blocking
+            try {
+                if (rememberMeCheckbox && rememberMeCheckbox.checked) {
+                    await setPersistence(auth, browserLocalPersistence);
+                } else {
+                    await setPersistence(auth, browserSessionPersistence);
+                }
+            } catch (persistErr) {
+                console.warn("Persistence setting notice:", persistErr);
             }
 
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            
+            // Immediate UI transition to Dashboard
+            if (loginContainer) loginContainer.style.display = 'none';
+            if (dashboardWrapper) dashboardWrapper.classList.add('active');
+
+            try {
+                initDashboardData();
+            } catch (initErr) {
+                console.warn("Dashboard data initialization notice:", initErr);
+            }
+
+            showToast(`Welcome back, ${email.split('@')[0]}!`, 'success');
             loginForm.reset();
             if (passwordInput) passwordInput.type = 'password';
             if (togglePasswordIcon) togglePasswordIcon.className = 'fa-solid fa-eye';
@@ -293,6 +314,11 @@ if (loginForm) {
             if (loginError) loginError.style.display = 'flex';
             showToast(errorMsg, 'error');
         } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = origBtnText;
+        }
+    });
+} finally {
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = origBtnText;
         }
