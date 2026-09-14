@@ -184,10 +184,24 @@ if (btnTogglePassword && passwordInput) {
     });
 }
 
+// Helper: Resolve UserID or Email input
+function resolveAdminEmail(input) {
+    let val = (input || '').trim();
+    if (!val) return '';
+    if (val.includes('@')) return val;
+    // Map common aliases or append default domain
+    const lower = val.toLowerCase();
+    if (lower === 'delight' || lower === 'delightchetter' || lower === 'admin') {
+        return 'delightchetter@gmail.com';
+    }
+    return `${val}@gmail.com`;
+}
+
 // Forgot Password Handler
 if (btnForgotPassword) {
     btnForgotPassword.addEventListener('click', () => {
-        const email = emailInput ? emailInput.value.trim() : '';
+        const rawInput = emailInput ? emailInput.value.trim() : '';
+        const email = resolveAdminEmail(rawInput);
         if (!email) {
             showToast('Please enter your UserID / Email above first, then click "Forgot password?".', 'warning');
             if (emailInput) emailInput.focus();
@@ -199,14 +213,16 @@ if (btnForgotPassword) {
 
         sendPasswordResetEmail(auth, email)
             .then(() => {
-                showToast(`Password reset link sent to ${email}! Check your inbox.`, 'success');
+                showToast(`Password reset link sent to ${email}! Check your Gmail inbox/spam.`, 'success');
             })
             .catch((err) => {
                 console.error("Password reset error:", err);
                 if (err.code === 'auth/user-not-found') {
-                    showToast('No user account found with that email.', 'error');
+                    showToast(`No user account found for ${email} in Firebase.`, 'error');
+                } else if (err.code === 'auth/invalid-email') {
+                    showToast('Invalid email address format. Please enter a valid email.', 'error');
                 } else {
-                    showToast(`Failed to send reset link: ${err.message || 'Please try again.'}`, 'error');
+                    showToast(`Failed to send reset link (${err.code || 'error'}): ${err.message || 'Please try again.'}`, 'error');
                 }
             })
             .finally(() => {
@@ -221,8 +237,15 @@ if (loginForm) {
         e.preventDefault();
         if (loginError) loginError.style.display = 'none';
 
-        const email = emailInput.value.trim();
+        const rawInput = emailInput.value.trim();
+        const email = resolveAdminEmail(rawInput);
         const password = passwordInput.value;
+
+        if (!email) {
+            if (loginErrorText) loginErrorText.innerText = 'Please enter your UserID or Email.';
+            if (loginError) loginError.style.display = 'flex';
+            return;
+        }
 
         const btnSubmit = document.getElementById('btn-admin-signin') || loginForm.querySelector('button[type="submit"]');
         const origBtnText = btnSubmit.innerHTML;
@@ -243,20 +266,22 @@ if (loginForm) {
             if (togglePasswordIcon) togglePasswordIcon.className = 'fa-solid fa-eye';
         } catch (error) {
             console.error("Auth login error:", error);
-            let errorMsg = 'Invalid email or password. Please verify your credentials.';
+            let errorMsg = `Login failed: ${error.message || 'Invalid credentials'}`;
             
-            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                errorMsg = 'Incorrect email or password. Please check your spelling and try again.';
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                errorMsg = `Incorrect password for ${email}. Click "Forgot password?" above to reset it.`;
+            } else if (error.code === 'auth/user-not-found') {
+                errorMsg = `No account found for "${email}". Please check spelling or create this user in Firebase Console.`;
             } else if (error.code === 'auth/invalid-email') {
-                errorMsg = 'Please enter a valid email address format.';
+                errorMsg = `"${rawInput}" is not recognized as a valid email. Please enter your full email address (e.g., delightchetter@gmail.com).`;
             } else if (error.code === 'auth/too-many-requests') {
-                errorMsg = 'Too many failed login attempts. Please wait a minute and try again.';
+                errorMsg = 'Too many failed login attempts. Firebase has temporarily locked sign-in. Please wait 1-2 minutes or reset your password.';
             } else if (error.code === 'auth/network-request-failed') {
-                errorMsg = 'Network connection failed. Please check your internet connection.';
+                errorMsg = 'Network connection failed. Please verify your internet connection or disable ad-blockers.';
             } else if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/configuration-not-found') {
                 errorMsg = 'Email/Password sign-in is disabled in your Firebase Console. Enable it in Authentication > Sign-in method.';
             } else if (error.code === 'auth/user-disabled') {
-                errorMsg = 'This admin account has been disabled in Firebase Console.';
+                errorMsg = `The account "${email}" has been disabled in Firebase Console.`;
             }
             
             if (loginErrorText) {
