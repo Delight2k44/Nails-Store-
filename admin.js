@@ -318,11 +318,6 @@ if (loginForm) {
             btnSubmit.innerHTML = origBtnText;
         }
     });
-} finally {
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = origBtnText;
-        }
-    });
 }
 
 // Logout Handler
