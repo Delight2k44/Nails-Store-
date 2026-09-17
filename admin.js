@@ -2906,7 +2906,6 @@ function saveAllPrices() {
             }
         });
 }
-}
 
 /* ==========================================
    QR CODE CLIENT SLIP SCANNER & AUTO-COMPLETE
