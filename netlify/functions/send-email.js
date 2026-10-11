@@ -124,7 +124,7 @@ exports.handler = async (event) => {
         if (type === 'booking_created') {
             const results = {};
             if (booking.clientEmail) {
-                results.client = await sendBrevoMail(apiKey, sender, [{ email: booking.clientEmail, name: booking.clientName || 'Client' }], `✨ Booking Request Received: ${DEFAULT_SALON.name} (#${booking.id || ''})`, buildClientBookingReceivedHtml(booking, DEFAULT_SALON));
+                results.client = await sendBrevoMail(apiKey, sender, [{ email: booking.clientEmail, name: booking.clientName || 'Client' }], `✨ Booking Request Received - ${DEFAULT_SALON.name}`, buildClientBookingReceivedHtml(booking, DEFAULT_SALON));
             }
             results.admin = await sendBrevoMail(apiKey, sender, adminRecipients, `🔔 New Booking Alert: ${booking.clientName} - ${booking.service}`, buildAdminAlertHtml(booking, DEFAULT_SALON));
             return { statusCode: 200, body: JSON.stringify({ success: true, results }) };
@@ -133,9 +133,9 @@ exports.handler = async (event) => {
         if (type === 'booking_status') {
             const results = {};
             const isApproved = newStatus === 'confirmed';
-            const subject = isApproved ? "🎉 Your Appointment is Confirmed!" : "Update regarding your booking";
+            const subject = isApproved ? "🎉 Your Appointment is Confirmed!" : "Update regarding your appointment";
             if (booking.clientEmail) {
-                results.client = await sendBrevoMail(apiKey, sender, [{ email: booking.clientEmail, name: booking.clientName || 'Client' }], `${subject} - ${DEFAULT_SALON.name} (#${booking.id || ''})`, buildStatusUpdateHtml(booking, newStatus, customNote, DEFAULT_SALON));
+                results.client = await sendBrevoMail(apiKey, sender, [{ email: booking.clientEmail, name: booking.clientName || 'Client' }], `${subject} - ${DEFAULT_SALON.name}`, buildStatusUpdateHtml(booking, newStatus, customNote, DEFAULT_SALON));
             }
             results.admin = await sendBrevoMail(apiKey, sender, adminRecipients, `[Admin Log] Booking ${newStatus}: ${booking.clientName}`, buildStatusUpdateHtml(booking, newStatus, customNote, DEFAULT_SALON));
             return { statusCode: 200, body: JSON.stringify({ success: true, results }) };

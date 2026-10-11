@@ -104,7 +104,7 @@ async function dispatchEmail(payload) {
         const isApproved = payload.newStatus === 'confirmed';
 
         if (payload.type === 'booking_created') {
-            subject = `✨ Booking Request Received: ${DEFAULT_CONFIG.salonName} (#${booking.id || ''})`;
+            subject = `✨ Booking Request Received - ${DEFAULT_CONFIG.salonName}`;
             htmlContent = `
                 <div style="font-family: sans-serif; max-width: 580px; margin: 0 auto; padding: 25px; border: 1px solid #ebdcd5; border-radius: 14px;">
                     <h2 style="color: #1e1613;">${DEFAULT_CONFIG.salonName}</h2>

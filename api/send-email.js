@@ -365,7 +365,7 @@ export default async function handler(req, res) {
                     apiKey,
                     sender,
                     [{ email: booking.clientEmail, name: booking.clientName || 'Client' }],
-                    `✨ Booking Request Received: ${salon.name} (#${booking.id || ''})`,
+                    `✨ Booking Request Received - ${salon.name}`,
                     clientHtml
                 );
             }
@@ -376,7 +376,7 @@ export default async function handler(req, res) {
                 apiKey,
                 sender,
                 adminRecipients,
-                `🔔 New Booking Alert: ${booking.clientName || 'Client'} - ${booking.service || 'Nails'} (#${booking.id || ''})`,
+                `🔔 New Booking Alert: ${booking.clientName || 'Client'} - ${booking.service || 'Nails'}`,
                 adminHtml
             );
 
@@ -387,7 +387,7 @@ export default async function handler(req, res) {
         if (type === 'booking_status') {
             const results = {};
             const isApproved = newStatus === 'confirmed';
-            const subjectPrefix = isApproved ? "🎉 Your Appointment is Confirmed!" : "Update regarding your booking";
+            const subjectPrefix = isApproved ? "🎉 Your Appointment is Confirmed!" : "Update regarding your appointment";
 
             // Send status email to Client
             if (booking.clientEmail && booking.clientEmail.includes('@')) {
@@ -396,7 +396,7 @@ export default async function handler(req, res) {
                     apiKey,
                     sender,
                     [{ email: booking.clientEmail, name: booking.clientName || 'Client' }],
-                    `${subjectPrefix} - ${salon.name} (#${booking.id || ''})`,
+                    `${subjectPrefix} - ${salon.name}`,
                     clientHtml
                 );
             }
@@ -407,7 +407,7 @@ export default async function handler(req, res) {
                 apiKey,
                 sender,
                 adminRecipients,
-                `[Admin Log] Booking ${newStatus.toUpperCase()}: ${booking.clientName || ''} (#${booking.id || ''})`,
+                `[Admin Log] Booking ${newStatus.toUpperCase()}: ${booking.clientName || ''}`,
                 adminHtml
             );
 
