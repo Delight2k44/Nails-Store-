@@ -400,30 +400,30 @@
                     </button>
                 </div>
 
-                <!-- Section 4: Email Notifications (EmailJS & Gmail Service) -->
+                <!-- Section 4: Email Notifications (Brevo Service) -->
                 <div class="cms-section glass-panel" style="margin-top: 20px;">
-                    <h3><i class="fa-solid fa-envelope-circle-check"></i> Email Notifications (Gmail Service via EmailJS)</h3>
-                    <p class="cms-section-desc">Automated luxury emails sent to clients and admin when appointments are booked, confirmed, or cancelled (No domain required!).</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0;"><i class="fa-solid fa-envelope-circle-check"></i> Email Notifications (Brevo Service)</h3>
+                        <span style="background: rgba(39, 174, 96, 0.15); color: #27ae60; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(39, 174, 96, 0.3);">
+                            <i class="fa-solid fa-circle-check"></i> Active
+                        </span>
+                    </div>
+                    <p class="cms-section-desc">Automated luxury emails sent to clients and admin when appointments are booked, confirmed, or cancelled.</p>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 20px;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="emailjs-service-id"><i class="fa-solid fa-server"></i> Service ID</label>
-                            <input type="text" id="emailjs-service-id" value="service_ujlnag2" placeholder="service_ujlnag2" style="font-family: monospace;">
+                            <label for="emailjs-public-key"><i class="fa-solid fa-key"></i> Brevo API Key</label>
+                            <input type="password" id="emailjs-public-key" placeholder="Configured & Ready" style="font-family: monospace;">
                         </div>
 
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label for="emailjs-template-id"><i class="fa-solid fa-file-code"></i> Template ID</label>
-                            <input type="text" id="emailjs-template-id" value="template_4yq9x3s" placeholder="template_4yq9x3s" style="font-family: monospace;">
+                            <label for="emailjs-service-id"><i class="fa-solid fa-paper-plane"></i> Sender Email (Verified in Brevo)</label>
+                            <input type="email" id="emailjs-service-id" value="delightchetter@gmail.com" placeholder="delightchetter@gmail.com">
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="emailjs-public-key"><i class="fa-solid fa-key"></i> Public Key</label>
-                            <input type="text" id="emailjs-public-key" value="UAz_8FREkTh2gkZxc" placeholder="UAz_8FREkTh2gkZxc" style="font-family: monospace;">
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="resend-admin-email"><i class="fa-solid fa-user-shield"></i> Admin Alert Email</label>
-                            <input type="email" id="resend-admin-email" value="ndivhuwovele5@gmail.com" placeholder="ndivhuwovele5@gmail.com">
+                        <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
+                            <label for="resend-admin-email"><i class="fa-solid fa-user-shield"></i> Admin Notification Emails (Comma-separated)</label>
+                            <input type="text" id="resend-admin-email" value="delightchetter@gmail.com, ndivhuwovele5@gmail.com" placeholder="delightchetter@gmail.com, ndivhuwovele5@gmail.com">
                         </div>
                     </div>
 

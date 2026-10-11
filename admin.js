@@ -2222,32 +2222,32 @@ function initCMSBehaviors() {
 
     // --- Load Email Configuration ---
     getResendConfig().then(config => {
-        const serviceInput = document.getElementById('emailjs-service-id');
-        const templateInput = document.getElementById('emailjs-template-id');
-        const publicInput = document.getElementById('emailjs-public-key');
+        const senderInput = document.getElementById('emailjs-service-id');
+        const apiKeyInput = document.getElementById('emailjs-public-key');
         const adminEmailInput = document.getElementById('resend-admin-email');
-        if (serviceInput && config.serviceId) serviceInput.value = config.serviceId;
-        if (templateInput && config.templateId) templateInput.value = config.templateId;
-        if (publicInput && config.publicKey) publicInput.value = config.publicKey;
-        if (adminEmailInput && config.adminEmail) adminEmailInput.value = config.adminEmail;
+        if (senderInput && config.senderEmail) senderInput.value = config.senderEmail;
+        if (apiKeyInput && config.apiKey) apiKeyInput.value = config.apiKey;
+        if (adminEmailInput) {
+            const emails = Array.isArray(config.adminEmails) ? config.adminEmails.join(', ') : (config.adminEmail || "delightchetter@gmail.com, ndivhuwovele5@gmail.com");
+            adminEmailInput.value = emails;
+        }
     }).catch(err => console.warn("Email config load error:", err));
 
     // --- Save Email Settings Button ---
     const btnSaveEmailSettings = document.getElementById('btn-save-email-settings');
     if (btnSaveEmailSettings) {
         btnSaveEmailSettings.addEventListener('click', async () => {
-            const serviceId = document.getElementById('emailjs-service-id')?.value || '';
-            const templateId = document.getElementById('emailjs-template-id')?.value || '';
-            const publicKey = document.getElementById('emailjs-public-key')?.value || '';
-            const adminEmail = document.getElementById('resend-admin-email')?.value || '';
+            const senderEmail = document.getElementById('emailjs-service-id')?.value?.trim() || 'delightchetter@gmail.com';
+            const apiKey = document.getElementById('emailjs-public-key')?.value?.trim() || '';
+            const adminEmailStr = document.getElementById('resend-admin-email')?.value?.trim() || '';
 
             const origHtml = btnSaveEmailSettings.innerHTML;
             btnSaveEmailSettings.disabled = true;
             btnSaveEmailSettings.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
             try {
-                await saveResendConfig({ serviceId, templateId, publicKey, adminEmail });
-                showToast('Email notification settings saved successfully!', 'success');
+                await saveResendConfig({ apiKey, senderEmail, adminEmail: adminEmailStr });
+                showToast('Brevo email notification settings saved successfully!', 'success');
             } catch (e) {
                 console.error("Save email settings error:", e);
                 showToast('Failed to save email settings.', 'error');
