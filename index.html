@@ -371,6 +371,14 @@
                                 <span>Estimated Total:</span>
                                 <span id="invoice-total-amount">R0.00</span>
                             </div>
+                            <div class="invoice-row invoice-deposit-row" id="invoice-deposit-row" style="color: var(--color-rose-gold-dark); font-weight: 700; margin-top: 6px;">
+                                <span><i class="fa-solid fa-shield-halved"></i> Required Deposit (50%):</span>
+                                <span id="invoice-deposit-amount">R0.00</span>
+                            </div>
+                            <div class="invoice-row invoice-balance-row" id="invoice-balance-row" style="font-size: 0.8rem; color: var(--color-text-muted);">
+                                <span>Remaining Due at Salon:</span>
+                                <span id="invoice-balance-amount">R0.00</span>
+                            </div>
                             <div class="invoice-row datetime-summary">
                                 <span><i class="fa-regular fa-calendar-days"></i> <span id="invoice-date">--</span></span>
                                 <span><i class="fa-regular fa-clock"></i> <span id="invoice-time">--</span></span>
@@ -390,13 +398,49 @@
                         <i class="fa-solid fa-circle-check animated-checkmark"></i>
                     </div>
                     <h2>Appointment Requested!</h2>
-                    <p class="success-lead">We have reserved your temporary slot. A confirmation ticket has been generated below.</p>
+                    <p class="success-lead">We have reserved your temporary slot. Complete your deposit below to secure your appointment.</p>
+                    
+                    <!-- Deposit Payment & Banking Slip Card -->
+                    <div class="deposit-instructions-card glass-panel" id="deposit-instructions-card" style="margin: 25px auto 30px; max-width: 580px; padding: 24px; text-align: left; border: 1px solid rgba(200, 143, 123, 0.4); border-radius: 14px; background: rgba(255, 255, 255, 0.65); box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                            <h3 style="margin: 0; color: #1e1613; font-size: 1.15rem;"><i class="fa-solid fa-building-columns" style="color: var(--color-rose-gold-dark);"></i> Step 2: Pay Deposit to Secure Slot</h3>
+                            <span class="status-badge pending" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; background: #fff3cd; color: #856404; font-weight: bold;">⏳ Deposit Required</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0 0 16px; line-height: 1.5;">
+                            Please transfer your booking deposit within <strong>2 hours</strong> to secure this time slot. Use your Booking Reference as payment reference.
+                        </p>
+                        
+                        <div class="deposit-banking-details" style="background: rgba(250, 246, 243, 0.95); border: 1px dashed rgba(200, 143, 123, 0.5); border-radius: 10px; padding: 16px; margin-bottom: 18px;">
+                            <table style="width: 100%; font-size: 0.88rem; border-collapse: collapse;">
+                                <tr><td style="padding: 6px 0; color: var(--color-text-muted);">Deposit Required:</td><td style="padding: 6px 0; font-weight: 800; font-size: 1.15rem; color: var(--color-rose-gold-dark); text-align: right;" id="deposit-slip-amount">R0.00</td></tr>
+                                <tr><td style="padding: 6px 0; color: var(--color-text-muted);">Payment Reference:</td><td style="padding: 6px 0; font-family: monospace; font-weight: 700; color: #1e1613; text-align: right;"><span id="deposit-slip-reference">NB-PENDING</span> <button type="button" id="btn-copy-ref" style="background: none; border: none; color: var(--color-rose-gold-dark); cursor: pointer; padding: 0 4px;" title="Copy Reference"><i class="fa-regular fa-copy"></i></button></td></tr>
+                                <tr><td style="padding: 6px 0; color: var(--color-text-muted);">Bank Name:</td><td style="padding: 6px 0; font-weight: 600; text-align: right;" id="deposit-slip-bank">Capitec Bank</td></tr>
+                                <tr><td style="padding: 6px 0; color: var(--color-text-muted);">Account Holder:</td><td style="padding: 6px 0; font-weight: 600; text-align: right;" id="deposit-slip-holder">Ndi's Nail Bar</td></tr>
+                                <tr><td style="padding: 6px 0; color: var(--color-text-muted);">Account Number:</td><td style="padding: 6px 0; font-weight: 700; font-family: monospace; text-align: right;" id="deposit-slip-number">1234567890</td></tr>
+                                <tr><td style="padding: 6px 0; color: var(--color-text-muted);">Branch Code:</td><td style="padding: 6px 0; font-weight: 600; text-align: right;" id="deposit-slip-branch">470010</td></tr>
+                                <tr><td style="padding: 6px 0; color: var(--color-text-muted);">Capitec Pay Cell:</td><td style="padding: 6px 0; font-weight: 600; text-align: right;" id="deposit-slip-cell">071 599 6931</td></tr>
+                            </table>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <a href="#" id="btn-whatsapp-proof" target="_blank" style="flex: 1; min-width: 200px; text-align: center; background: #25D366; color: #fff; padding: 12px 18px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.88rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i class="fa-brands fa-whatsapp" style="font-size: 1.1rem;"></i> Send Proof via WhatsApp
+                            </a>
+                            <label style="flex: 1; min-width: 200px; text-align: center; background: rgba(30, 22, 19, 0.06); border: 1px solid rgba(30, 22, 19, 0.2); color: #1e1613; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> <span id="pop-upload-label">Upload Proof Slip</span>
+                                <input type="file" id="deposit-pop-input" accept="image/*,.pdf" style="display: none;">
+                            </label>
+                        </div>
+                        <div id="pop-upload-feedback" style="display: none; margin-top: 12px; font-size: 0.82rem; color: #27ae60; font-weight: 600;">
+                            <i class="fa-solid fa-circle-check"></i> Proof of payment attached successfully!
+                        </div>
+                    </div>
                     
                     <!-- Ticket Receipt Graphic -->
                     <div class="ticket glass-panel" id="booking-ticket">
                         <div class="ticket-header">
                             <h4>NDI'S NAIL BAR</h4>
-                            <span class="ticket-status">CONFIRMED</span>
+                            <span class="ticket-status" id="ticket-status-badge">PENDING DEPOSIT</span>
                         </div>
                         <div class="ticket-divider"></div>
                         <div class="ticket-body">
@@ -417,8 +461,12 @@
                                 <span class="value" id="ticket-datetime">--</span>
                             </div>
                             <div class="ticket-info">
-                                <span class="label">TOTAL ESTIMATED PRICE</span>
+                                <span class="label">TOTAL ESTIMATED</span>
                                 <span class="value accent-text bold" id="ticket-price">--</span>
+                            </div>
+                            <div class="ticket-info">
+                                <span class="label">DEPOSIT REQUIRED</span>
+                                <span class="value accent-text bold" id="ticket-deposit-amount" style="color: #b76e79;">--</span>
                             </div>
                         </div>
                         <div class="ticket-notch-row">

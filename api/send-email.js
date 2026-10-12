@@ -27,6 +27,8 @@ function buildClientBookingReceivedHtml(booking, salon) {
         ? booking.addons.join(", ") 
         : (booking.addons || "None");
     const price = formatPrice(booking.totalPrice);
+    const depositPrice = formatPrice(booking.depositAmount || (parseFloat(booking.totalPrice || 0) * 0.5));
+    const balancePrice = formatPrice(booking.remainingBalance || (parseFloat(booking.totalPrice || 0) * 0.5));
     const bookingId = booking.id || "NB-PENDING";
 
     return `
@@ -52,7 +54,7 @@ function buildClientBookingReceivedHtml(booking, salon) {
             <td style="padding: 30px 25px;">
                 <h2 style="font-size: 18px; font-weight: 700; margin: 0 0 12px; color: #1e1613;">Hi ${booking.clientName || 'Valued Guest'}, ✨</h2>
                 <p style="font-size: 14px; line-height: 1.6; color: #6b5c57; margin: 0 0 22px;">
-                    Thank you for scheduling your session with <strong>${salon.name}</strong>. We have successfully received your appointment request. Our studio is currently reviewing your chosen time slot and you will receive a confirmation email as soon as it is approved.
+                    Thank you for scheduling your session with <strong>${salon.name}</strong>. We have received your appointment request. To lock in and secure your chosen slot, please complete the booking deposit below.
                 </p>
 
                 <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #faf6f3; border: 1px solid #ebdcd5; border-radius: 12px; margin-bottom: 24px;">
@@ -79,7 +81,37 @@ function buildClientBookingReceivedHtml(booking, salon) {
                                     <td style="padding: 10px 0 2px; color: #1e1613; font-weight: 700; font-size: 15px;">Estimated Total:</td>
                                     <td style="padding: 10px 0 2px; color: #b76e79; font-weight: 700; font-size: 17px; text-align: right;">${price}</td>
                                 </tr>
+                                <tr>
+                                    <td style="padding: 6px 0 2px; color: #b76e79; font-weight: 700;">Required Deposit:</td>
+                                    <td style="padding: 6px 0 2px; color: #b76e79; font-weight: 800; text-align: right;">${depositPrice}</td>
+                                </tr>
                             </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Banking Deposit Instructions -->
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fff9f6; border: 1px dashed #c88f7b; border-radius: 12px; margin-bottom: 24px;">
+                    <tr>
+                        <td style="padding: 18px 20px;">
+                            <h3 style="margin: 0 0 8px; font-size: 15px; color: #1e1613;">🏦 How to Confirm Your Slot (Deposit Payment)</h3>
+                            <p style="font-size: 13px; line-height: 1.5; color: #6b5c57; margin: 0 0 14px;">
+                                Please transfer your <strong>${depositPrice}</strong> deposit within <strong>2 hours</strong> to secure this appointment.
+                            </p>
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 13px;">
+                                <tr><td style="padding: 4px 0; color: #8c7873;">Deposit Amount:</td><td style="padding: 4px 0; font-weight: 700; color: #b76e79; text-align: right;">${depositPrice}</td></tr>
+                                <tr><td style="padding: 4px 0; color: #8c7873;">Payment Reference:</td><td style="padding: 4px 0; font-family: monospace; font-weight: 700; color: #1e1613; text-align: right;">${bookingId}</td></tr>
+                                <tr><td style="padding: 4px 0; color: #8c7873;">Bank:</td><td style="padding: 4px 0; font-weight: 600; text-align: right;">Capitec Bank</td></tr>
+                                <tr><td style="padding: 4px 0; color: #8c7873;">Account Holder:</td><td style="padding: 4px 0; font-weight: 600; text-align: right;">${salon.name}</td></tr>
+                                <tr><td style="padding: 4px 0; color: #8c7873;">Account Number:</td><td style="padding: 4px 0; font-family: monospace; font-weight: 700; text-align: right;">1234567890</td></tr>
+                                <tr><td style="padding: 4px 0; color: #8c7873;">Branch Code:</td><td style="padding: 4px 0; font-weight: 600; text-align: right;">470010</td></tr>
+                                <tr><td style="padding: 4px 0; color: #8c7873;">Capitec Pay Cell:</td><td style="padding: 4px 0; font-weight: 600; text-align: right;">${salon.phone}</td></tr>
+                            </table>
+                            <div style="text-align: center; margin-top: 15px;">
+                                <a href="https://wa.me/27715996931?text=Hi%20Ndi!%20Here%20is%20my%20deposit%20proof%20of%20payment%20for%20Booking%20${bookingId}" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; text-decoration: none; font-weight: 700; padding: 9px 20px; border-radius: 6px; font-size: 13px;">
+                                    Send Proof via WhatsApp &rarr;
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -151,6 +183,7 @@ function buildAdminAlertHtml(booking, salon) {
                     <tr><td style="padding: 8px 0; font-weight: 600; color: #6b5c57; border-bottom: 1px solid #f0f0f0;">Add-ons:</td><td style="padding: 8px 0; text-align: right; border-bottom: 1px solid #f0f0f0;">${addons}</td></tr>
                     <tr><td style="padding: 8px 0; font-weight: 600; color: #6b5c57; border-bottom: 1px solid #f0f0f0;">Requested Time:</td><td style="padding: 8px 0; font-weight: 700; text-align: right; border-bottom: 1px solid #f0f0f0;">${booking.date || '--'} @ ${booking.time || '--'}</td></tr>
                     <tr><td style="padding: 8px 0; font-weight: 600; color: #6b5c57; border-bottom: 1px solid #f0f0f0;">Total Estimated:</td><td style="padding: 8px 0; font-weight: 700; color: #b76e79; text-align: right; border-bottom: 1px solid #f0f0f0;">${price}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: 600; color: #6b5c57; border-bottom: 1px solid #f0f0f0;">Deposit Required:</td><td style="padding: 8px 0; font-weight: 800; color: #b76e79; text-align: right; border-bottom: 1px solid #f0f0f0;">${formatPrice(booking.depositAmount || (parseFloat(booking.totalPrice || 0) * 0.5))} (Pending Transfer)</td></tr>
                     <tr><td style="padding: 8px 0; font-weight: 600; color: #6b5c57;">Notes / Requests:</td><td style="padding: 8px 0; text-align: right;">${booking.notes || 'None'}</td></tr>
                 </table>
 
@@ -178,6 +211,8 @@ function buildStatusUpdateHtml(booking, newStatus, customNote, salon) {
     const statusColor = isApproved ? "#27ae60" : "#c0392b";
     const statusBg = isApproved ? "#e8f5e9" : "#fbe9e7";
     const price = formatPrice(booking.totalPrice);
+    const depositPrice = formatPrice(booking.depositAmount || (parseFloat(booking.totalPrice || 0) * 0.5));
+    const balancePrice = formatPrice(booking.remainingBalance || (parseFloat(booking.totalPrice || 0) * 0.5));
     const bookingId = booking.id || "NB-APPOINTMENT";
 
     const noteBlock = customNote ? `
@@ -223,6 +258,8 @@ function buildStatusUpdateHtml(booking, newStatus, customNote, salon) {
                                 <tr><td style="padding: 6px 0; color: #8c7873; border-bottom: 1px dashed #e2d1c9;">Service:</td><td style="padding: 6px 0; font-weight: 600; text-align: right; border-bottom: 1px dashed #e2d1c9;">${booking.service || 'Nail Service'}</td></tr>
                                 <tr><td style="padding: 6px 0; color: #8c7873; border-bottom: 1px dashed #e2d1c9;">Date & Time:</td><td style="padding: 6px 0; font-weight: 600; text-align: right; border-bottom: 1px dashed #e2d1c9;">${booking.date || '--'} @ ${booking.time || '--'}</td></tr>
                                 <tr><td style="padding: 6px 0; color: #8c7873; border-bottom: 1px dashed #e2d1c9;">Total Amount:</td><td style="padding: 6px 0; font-weight: 700; color: #b76e79; text-align: right; border-bottom: 1px dashed #e2d1c9;">${price}</td></tr>
+                                <tr><td style="padding: 6px 0; color: #8c7873; border-bottom: 1px dashed #e2d1c9;">Deposit Paid:</td><td style="padding: 6px 0; font-weight: 700; color: #27ae60; text-align: right; border-bottom: 1px dashed #e2d1c9;">${depositPrice} &check;</td></tr>
+                                <tr><td style="padding: 6px 0; color: #8c7873; border-bottom: 1px dashed #e2d1c9;">Remaining at Studio:</td><td style="padding: 6px 0; font-weight: 700; color: #b76e79; text-align: right; border-bottom: 1px dashed #e2d1c9;">${balancePrice}</td></tr>
                                 <tr><td style="padding: 8px 0 2px; color: #8c7873;">Status:</td><td style="padding: 8px 0 2px; color: ${statusColor}; font-weight: 700; text-transform: uppercase; text-align: right;">${newStatus}</td></tr>
                             </table>
                         </td>

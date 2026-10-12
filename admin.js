@@ -727,13 +727,18 @@ function renderBookingsTable() {
         const priceFormatted = booking.totalPrice ? `R${parseFloat(booking.totalPrice).toFixed(2)}` : 'R0.00';
         const notesFormatted = booking.notes ? booking.notes : '--';
 
+        const depositAmt = booking.depositAmount ? `R${parseFloat(booking.depositAmount).toFixed(2)}` : (booking.totalPrice ? `R${(parseFloat(booking.totalPrice) * 0.5).toFixed(2)}` : 'R0.00');
+        const depositStatus = booking.depositStatus || (booking.status === 'confirmed' || booking.status === 'completed' ? 'paid' : 'pending');
+        const isDepPaid = depositStatus === 'paid';
+        const depositBadge = `<div style="margin-top: 4px;"><span style="font-size: 0.72rem; padding: 2px 7px; border-radius: 10px; font-weight: 700; background: ${isDepPaid ? '#e8f5e9' : '#fff3cd'}; color: ${isDepPaid ? '#2e7d32' : '#856404'}; border: 1px solid ${isDepPaid ? '#c8e6c9' : '#ffeeba'}; display: inline-block;">${isDepPaid ? '✓ Deposit: ' + depositAmt + ' Paid' : '⏳ Deposit: ' + depositAmt + ' Pending'}</span></div>`;
+
         row.innerHTML = `
             <td class="bold">${displayId}</td>
             <td>${booking.clientName || 'Unknown'}</td>
             <td>${booking.service || '--'}</td>
             <td><div class="addons-tags">${addonsHTML}</div></td>
             <td><strong>${dateFormatted}</strong><br><span style="font-size:0.75rem;">${timeFormatted}</span></td>
-            <td class="bold accent-text">${priceFormatted}</td>
+            <td class="bold accent-text">${priceFormatted}${depositBadge}</td>
             <td class="booking-notes-col" title="${notesFormatted}">${notesFormatted}</td>
             <td><span class="status-badge ${booking.status}">${booking.status}</span></td>
             <td><div class="table-actions">${actionsHTML}</div></td>
@@ -1078,6 +1083,9 @@ function updateBookingWithNotification(docId, newStatus, customNote = '', channe
         notificationSentAt: Timestamp.now(),
         notificationChannel: channel || 'In-App'
     };
+    if (newStatus === 'confirmed') {
+        updateData.depositStatus = 'paid';
+    }
 
     const targetBooking = allBookingsList.find(b => b.docId === docId) || currentNotifyBooking;
     if (targetBooking && (newStatus === 'confirmed' || newStatus === 'cancelled')) {
@@ -1181,7 +1189,12 @@ function updateBookingStatus(docId, newStatus, btnElement) {
         sendBookingStatusEmails(targetBooking, newStatus).catch(e => console.warn("Resend email dispatch error:", e));
     }
 
-    updateDoc(docRef, { status: newStatus })
+    const updatePayload = { status: newStatus };
+    if (newStatus === 'confirmed') {
+        updatePayload.depositStatus = 'paid';
+    }
+
+    updateDoc(docRef, updatePayload)
         .then(() => {
             const statusLabels = {
                 confirmed: 'confirmed',
@@ -2219,6 +2232,67 @@ function initCMSBehaviors() {
         });
     }
     if (addonForm) addonForm.addEventListener('submit', handleSaveAddonModal);
+
+    // --- Load Banking Configuration ---
+    getDoc(doc(db, "settings", "banking")).then(docSnap => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const bankInput = document.getElementById('banking-bank-name');
+            const holderInput = document.getElementById('banking-account-holder');
+            const numInput = document.getElementById('banking-account-number');
+            const branchInput = document.getElementById('banking-branch-code');
+            const cellInput = document.getElementById('banking-cell-number');
+            const percentInput = document.getElementById('banking-deposit-percent');
+
+            if (bankInput && data.bankName) bankInput.value = data.bankName;
+            if (holderInput && data.accountHolder) holderInput.value = data.accountHolder;
+            if (numInput && data.accountNumber) numInput.value = data.accountNumber;
+            if (branchInput && data.branchCode) branchInput.value = data.branchCode;
+            if (cellInput && data.capitecPayCell) cellInput.value = data.capitecPayCell;
+            if (percentInput && data.depositValue) percentInput.value = data.depositValue;
+        }
+    }).catch(err => console.warn("Banking config load error:", err));
+
+    // --- Save Banking Settings Button ---
+    const btnSaveBanking = document.getElementById('btn-save-banking-settings');
+    if (btnSaveBanking) {
+        btnSaveBanking.addEventListener('click', async () => {
+            const bankName = document.getElementById('banking-bank-name')?.value?.trim() || 'Capitec Bank';
+            const accountHolder = document.getElementById('banking-account-holder')?.value?.trim() || "Ndi's Nail Bar";
+            const accountNumber = document.getElementById('banking-account-number')?.value?.trim() || '';
+            const branchCode = document.getElementById('banking-branch-code')?.value?.trim() || '470010';
+            const capitecPayCell = document.getElementById('banking-cell-number')?.value?.trim() || '071 599 6931';
+            const depositValue = parseInt(document.getElementById('banking-deposit-percent')?.value) || 50;
+
+            const origHtml = btnSaveBanking.innerHTML;
+            btnSaveBanking.disabled = true;
+            btnSaveBanking.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                const bankingData = {
+                    depositEnabled: true,
+                    depositType: 'percentage',
+                    depositValue,
+                    bankName,
+                    accountHolder,
+                    accountNumber,
+                    branchCode,
+                    capitecPayCell,
+                    instructions: 'Please transfer your deposit within 2 hours using your Booking Reference to confirm your appointment.',
+                    updatedAt: new Date().toISOString()
+                };
+                await setDoc(doc(db, "settings", "banking"), bankingData, { merge: true });
+                try { localStorage.setItem('ndi_banking_cache', JSON.stringify(bankingData)); } catch(e) {}
+                showToast('Banking and deposit details saved successfully!', 'success');
+            } catch (e) {
+                console.error("Save banking settings error:", e);
+                showToast('Failed to save banking details.', 'error');
+            } finally {
+                btnSaveBanking.disabled = false;
+                btnSaveBanking.innerHTML = origHtml;
+            }
+        });
+    }
 
     // --- Load Email Configuration ---
     getResendConfig().then(config => {

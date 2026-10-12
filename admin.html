@@ -215,7 +215,7 @@
                                 <th>Service</th>
                                 <th>Add-ons</th>
                                 <th>Date & Time</th>
-                                <th>Total Price</th>
+                                <th>Total & Deposit</th>
                                 <th>Notes</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -398,6 +398,57 @@
                     <button type="button" class="btn btn-secondary" id="btn-seed-default-prices" style="font-size: 0.85rem; padding: 12px 20px;">
                         <i class="fa-solid fa-arrows-rotate"></i> Seed / Reset Default Prices
                     </button>
+                </div>
+
+                <!-- Section 3.5: Deposit & Banking Settings -->
+                <div class="cms-section glass-panel" style="margin-top: 10px; margin-bottom: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="margin-bottom: 0;"><i class="fa-solid fa-building-columns"></i> Deposit & Banking Details</h3>
+                        </div>
+                        <span style="background: rgba(39, 174, 96, 0.15); color: #27ae60; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(39, 174, 96, 0.3);">
+                            <i class="fa-solid fa-circle-check"></i> 50% Booking Deposit Active
+                        </span>
+                    </div>
+                    <p class="cms-section-desc">Manage the banking and Capitec Pay details that clients see when paying their deposit to secure an appointment.</p>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-top: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="banking-bank-name"><i class="fa-solid fa-landmark"></i> Bank Name</label>
+                            <input type="text" id="banking-bank-name" value="Capitec Bank" placeholder="Capitec Bank">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="banking-account-holder"><i class="fa-solid fa-user"></i> Account Holder Name</label>
+                            <input type="text" id="banking-account-holder" value="Ndi's Nail Bar" placeholder="Account Holder">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="banking-account-number"><i class="fa-solid fa-credit-card"></i> Account Number</label>
+                            <input type="text" id="banking-account-number" value="1234567890" placeholder="Account Number" style="font-family: monospace;">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="banking-branch-code"><i class="fa-solid fa-code-branch"></i> Branch Code</label>
+                            <input type="text" id="banking-branch-code" value="470010" placeholder="470010" style="font-family: monospace;">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="banking-cell-number"><i class="fa-solid fa-mobile-screen-button"></i> Capitec Pay / Cell Number</label>
+                            <input type="text" id="banking-cell-number" value="071 599 6931" placeholder="071 599 6931">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="banking-deposit-percent"><i class="fa-solid fa-percent"></i> Deposit Required (%)</label>
+                            <input type="number" id="banking-deposit-percent" value="50" min="10" max="100" step="5">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; margin-top: 22px;">
+                        <button type="button" class="btn btn-primary" id="btn-save-banking-settings" style="font-size: 0.85rem; padding: 10px 22px;">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Banking Details
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Section 4: Email Notifications (Brevo Service) -->

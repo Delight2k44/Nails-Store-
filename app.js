@@ -9,6 +9,8 @@ import {
     doc,
     addDoc, 
     getDocs,
+    getDoc,
+    updateDoc,
     onSnapshot, 
     query, 
     where, 
@@ -195,6 +197,57 @@ function loadDynamicAddons() {
     } catch (err) {
         console.warn("Addons init skipped:", err);
     }
+}
+
+function loadDynamicBanking() {
+    window.ndiBankingSettings = {
+        depositEnabled: true,
+        depositType: 'percentage',
+        depositValue: 50,
+        bankName: "Capitec Bank",
+        accountHolder: "Ndi's Nail Bar",
+        accountNumber: "1234567890",
+        branchCode: "470010",
+        capitecPayCell: "071 599 6931"
+    };
+
+    // 1. Check local cache
+    try {
+        const cached = localStorage.getItem('ndi_banking_cache');
+        if (cached) {
+            window.ndiBankingSettings = { ...window.ndiBankingSettings, ...JSON.parse(cached) };
+            updateBankingSlipUI(window.ndiBankingSettings);
+        }
+    } catch (e) {}
+
+    // 2. Real-time Firestore sync
+    try {
+        onSnapshot(doc(db, "settings", "banking"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                window.ndiBankingSettings = { ...window.ndiBankingSettings, ...data };
+                try { localStorage.setItem('ndi_banking_cache', JSON.stringify(data)); } catch(e) {}
+                updateBankingSlipUI(window.ndiBankingSettings);
+            }
+        }, (err) => {
+            console.warn("Banking settings fetch error:", err);
+        });
+    } catch (err) {
+        console.warn("Banking init skipped:", err);
+    }
+}
+
+function updateBankingSlipUI(banking) {
+    const bankEl = document.getElementById('deposit-slip-bank');
+    const holderEl = document.getElementById('deposit-slip-holder');
+    const numEl = document.getElementById('deposit-slip-number');
+    const branchEl = document.getElementById('deposit-slip-branch');
+    const cellEl = document.getElementById('deposit-slip-cell');
+    if (bankEl && banking.bankName) bankEl.innerText = banking.bankName;
+    if (holderEl && banking.accountHolder) holderEl.innerText = banking.accountHolder;
+    if (numEl && banking.accountNumber) numEl.innerText = banking.accountNumber;
+    if (branchEl && banking.branchCode) branchEl.innerText = banking.branchCode;
+    if (cellEl && banking.capitecPayCell) cellEl.innerText = banking.capitecPayCell;
 }
 
 function renderServiceCards(services) {
@@ -437,9 +490,10 @@ function initBookingWizard() {
         totalPrice: 0
     };
 
-    // Load dynamic services and addons from Firestore
+    // Load dynamic services, addons and banking settings from Firestore
     loadDynamicServices();
     loadDynamicAddons();
+    loadDynamicBanking();
 
     // Quick Book Action (initial static buttons - dynamic ones are wired in renderServiceCards)
     const quickBookBtns = document.querySelectorAll('.btn-service-book');
@@ -558,6 +612,19 @@ function initBookingWizard() {
         bookingState.totalPrice = bookingState.servicePrice + addonsTotal;
         invoiceTotal.innerText = `R${bookingState.totalPrice.toFixed(2)}`;
 
+        // Calculate booking deposit (default 50% or from banking settings)
+        const depositPercent = (window.ndiBankingSettings && window.ndiBankingSettings.depositValue) ? window.ndiBankingSettings.depositValue : 50;
+        const depositAmount = Math.round((bookingState.totalPrice * (depositPercent / 100)) * 100) / 100;
+        const remainingBalance = Math.max(0, bookingState.totalPrice - depositAmount);
+
+        bookingState.depositAmount = depositAmount;
+        bookingState.remainingBalance = remainingBalance;
+
+        const depositElem = document.getElementById('invoice-deposit-amount');
+        const balanceElem = document.getElementById('invoice-balance-amount');
+        if (depositElem) depositElem.innerText = `R${depositAmount.toFixed(2)}`;
+        if (balanceElem) balanceElem.innerText = `R${remainingBalance.toFixed(2)}`;
+
         invoiceDate.innerText = bookingState.date || '--';
         invoiceTime.innerText = bookingState.timeSlot || '--';
     }
@@ -631,6 +698,9 @@ function initBookingWizard() {
 
         const bookingId = 'NB-' + Math.floor(10000 + Math.random() * 90000);
         
+        const depositAmt = bookingState.depositAmount || Math.round((bookingState.totalPrice * 0.5) * 100) / 100;
+        const remainingBal = bookingState.remainingBalance || Math.max(0, bookingState.totalPrice - depositAmt);
+
         const bookingData = {
             id: bookingId,
             clientName: bookingState.clientName,
@@ -641,18 +711,79 @@ function initBookingWizard() {
             date: bookingState.date,
             time: bookingState.timeSlot,
             totalPrice: bookingState.totalPrice,
+            depositAmount: depositAmt,
+            remainingBalance: remainingBal,
+            depositStatus: "pending",
             notes: bookingState.notes,
             status: "pending",
             createdAt: Timestamp.now()
         };
 
         addDoc(collection(db, "bookings"), bookingData)
-            .then(() => {
+            .then((docRef) => {
                 document.getElementById('ticket-client-name').innerText = bookingState.clientName;
                 document.getElementById('ticket-id').innerText = bookingId;
                 document.getElementById('ticket-service').innerText = bookingState.serviceName + (bookingState.addons.length ? ` (+${bookingState.addons.length} Add-ons)` : '');
                 document.getElementById('ticket-datetime').innerText = `${bookingState.date} @ ${bookingState.timeSlot}`;
                 document.getElementById('ticket-price').innerText = `R${bookingState.totalPrice.toFixed(2)}`;
+
+                const ticketDepositEl = document.getElementById('ticket-deposit-amount');
+                if (ticketDepositEl) ticketDepositEl.innerText = `R${depositAmt.toFixed(2)}`;
+
+                // Update Deposit Banking Slip
+                const depositSlipAmt = document.getElementById('deposit-slip-amount');
+                const depositSlipRef = document.getElementById('deposit-slip-reference');
+                if (depositSlipAmt) depositSlipAmt.innerText = `R${depositAmt.toFixed(2)}`;
+                if (depositSlipRef) depositSlipRef.innerText = bookingId;
+
+                // Wire Copy Reference button
+                const btnCopyRef = document.getElementById('btn-copy-ref');
+                if (btnCopyRef) {
+                    btnCopyRef.onclick = () => {
+                        navigator.clipboard.writeText(bookingId).then(() => {
+                            btnCopyRef.innerHTML = '<i class="fa-solid fa-check" style="color: #27ae60;"></i>';
+                            setTimeout(() => { btnCopyRef.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 2000);
+                        });
+                    };
+                }
+
+                // Wire Send Proof via WhatsApp button
+                const btnWaProof = document.getElementById('btn-whatsapp-proof');
+                if (btnWaProof) {
+                    const banking = window.ndiBankingSettings || {};
+                    const cell = (banking.capitecPayCell || "071 599 6931").replace(/[^0-9]/g, '');
+                    const waPhone = cell.startsWith('0') ? '27' + cell.substring(1) : cell;
+                    const waMsg = `Hi Ndi! ✨ Here is my deposit proof of payment to confirm my appointment.\n\n🔖 Booking Ref: ${bookingId}\n💅 Service: ${bookingState.serviceName}\n💰 Deposit: R${depositAmt.toFixed(2)}\n👤 Name: ${bookingState.clientName}`;
+                    btnWaProof.href = `https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`;
+                }
+
+                // Wire Proof Slip Upload input
+                const popInput = document.getElementById('deposit-pop-input');
+                if (popInput) {
+                    popInput.onchange = () => {
+                        const file = popInput.files && popInput.files[0];
+                        if (!file) return;
+                        const label = document.getElementById('pop-upload-label');
+                        const feedback = document.getElementById('pop-upload-feedback');
+                        if (label) label.innerText = 'Attaching Slip...';
+
+                        const reader = new FileReader();
+                        reader.onload = async (e) => {
+                            try {
+                                await updateDoc(doc(db, "bookings", docRef.id), {
+                                    popAttachment: e.target.result,
+                                    popUploadedAt: Timestamp.now()
+                                });
+                                if (label) label.innerText = 'Slip Attached ✓';
+                                if (feedback) feedback.style.display = 'block';
+                            } catch (err) {
+                                console.warn("POP save error:", err);
+                                if (label) label.innerText = 'Slip Uploaded';
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    };
+                }
 
                 // Make ticket box visible first so QR & canvas can render
                 bookingForm.style.display = 'none';
@@ -683,8 +814,8 @@ function initBookingWizard() {
                     };
                 }
 
-                // Dispatch confirmation emails via Resend to User & Admin
-                sendBookingCreatedEmails(bookingData).catch(e => console.warn("Resend email dispatch:", e));
+                // Dispatch confirmation emails via Brevo to User & Admin
+                sendBookingCreatedEmails(bookingData).catch(e => console.warn("Brevo email dispatch:", e));
             })
             .catch(err => {
                 console.error("Booking submit failed:", err);

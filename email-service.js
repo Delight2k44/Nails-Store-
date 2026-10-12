@@ -111,7 +111,13 @@ async function dispatchEmail(payload) {
                     <p style="color: #b76e79; font-weight: bold;">Booking Request Received ⏳</p>
                     <p>Hi ${booking.clientName || 'Valued Guest'}, we have received your booking request for <strong>${booking.service || 'Nail Service'}</strong> on <strong>${booking.date || ''} @ ${booking.time || ''}</strong>.</p>
                     <p>Total Estimated: <strong>R${booking.totalPrice || '0.00'}</strong> | Ref: <strong>${booking.id || ''}</strong></p>
-                    <p>Our studio is reviewing your slot and you will receive a confirmation shortly once approved.</p>
+                    <p style="color: #b76e79; font-weight: bold;">Required Deposit: R${booking.depositAmount || (parseFloat(booking.totalPrice || 0) * 0.5).toFixed(2)} (Please transfer within 2 hours)</p>
+                    <div style="background: #faf6f3; padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 13px;">
+                        <strong>Bank:</strong> Capitec Bank | <strong>Acc Holder:</strong> ${DEFAULT_CONFIG.salonName}<br>
+                        <strong>Acc No:</strong> 1234567890 | <strong>Branch:</strong> 470010<br>
+                        <strong>Ref:</strong> ${booking.id || ''} | <strong>Capitec Pay:</strong> ${DEFAULT_CONFIG.salonPhone}
+                    </div>
+                    <p>Our studio will officially confirm your appointment as soon as your deposit is received.</p>
                     <hr style="border: none; border-top: 1px solid #f0e6e2; margin: 20px 0;">
                     <p style="font-size: 13px; color: #777;">📍 ${DEFAULT_CONFIG.salonAddress} | 📞 ${DEFAULT_CONFIG.salonPhone}</p>
                 </div>
