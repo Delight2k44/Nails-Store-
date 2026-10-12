@@ -225,7 +225,6 @@ img {
 }
 
 .nav-link {
-    display: none !important;
     font-size: 0.85rem;
     font-weight: 500;
     letter-spacing: 0.08em;
@@ -1727,41 +1726,48 @@ textarea:focus {
     }
     
     .mobile-nav-toggle {
-        display: none !important;
+        display: block;
+        z-index: 1001;
     }
     
     .navbar {
-        display: flex;
-        position: static;
-        top: auto;
-        right: auto;
-        transform: none;
-        width: auto;
-        max-width: none;
-        height: auto;
-        background: transparent;
-        flex-direction: row;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 0;
-        padding: 0;
+        position: fixed;
+        top: 0;
+        right: 0;
+        transform: translateX(100%);
+        width: 80%;
+        max-width: 300px;
+        height: 100vh;
+        height: 100dvh;
+        background: rgba(30, 22, 19, 0.98);
+        flex-direction: column;
+        justify-content: center;
+        gap: 25px;
+        padding: 35px 25px;
         z-index: 1000;
-        backdrop-filter: none;
-        box-shadow: none;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        backdrop-filter: blur(20px);
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.25);
     }
     
     .navbar.active {
-        transform: none;
+        transform: translateX(0);
     }
     
     .navbar .nav-link {
-        display: none !important;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 1rem;
+    }
+    
+    .navbar .nav-link:hover,
+    .navbar .nav-link.active {
+        color: var(--color-rose-gold-light);
     }
     
     .nav-book-btn {
-        width: auto;
-        padding: 8px 18px;
-        font-size: 0.8rem;
+        width: 100%;
+        padding: 12px 28px;
+        font-size: 0.85rem;
         text-align: center;
     }
     
